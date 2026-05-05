@@ -2,7 +2,7 @@
 
 Automated daily tracking of package and repository traction metrics from PyPI, npm, and GitHub.
 
-**Last updated:** 2026-05-04
+**Last updated:** 2026-05-05
 
 ## Tracked Items
 
@@ -36,8 +36,8 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 
 <table width="100%">
 <tr><td align="center"><img src="plots/pypi_7d.png" width="100%"></td><td align="center"><img src="plots/npm_7d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_stars_7d.png" width="100%"></td><td align="center"><img src="plots/github_forks_7d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_open_issues_7d.png" width="100%"></td><td align="center"><img src="plots/github_clones_7d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_stars_7d.png" width="100%"></td><td align="center"><img src="plots/github_clones_7d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_forks_7d.png" width="100%"></td><td align="center"><img src="plots/github_open_issues_7d.png" width="100%"></td></tr>
 <tr><td align="center"><img src="plots/discord_members_7d.png" width="100%"></td><td align="center"><img src="plots/discord_messages_7d.png" width="100%"></td></tr>
 </table>
 
@@ -45,8 +45,8 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 
 <table width="100%">
 <tr><td align="center"><img src="plots/pypi_14d.png" width="100%"></td><td align="center"><img src="plots/npm_14d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_stars_14d.png" width="100%"></td><td align="center"><img src="plots/github_forks_14d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_open_issues_14d.png" width="100%"></td><td align="center"><img src="plots/github_clones_14d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_stars_14d.png" width="100%"></td><td align="center"><img src="plots/github_clones_14d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_forks_14d.png" width="100%"></td><td align="center"><img src="plots/github_open_issues_14d.png" width="100%"></td></tr>
 <tr><td align="center"><img src="plots/discord_members_14d.png" width="100%"></td><td align="center"><img src="plots/discord_messages_14d.png" width="100%"></td></tr>
 </table>
 
@@ -54,8 +54,8 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 
 <table width="100%">
 <tr><td align="center"><img src="plots/pypi_30d.png" width="100%"></td><td align="center"><img src="plots/npm_30d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_stars_30d.png" width="100%"></td><td align="center"><img src="plots/github_forks_30d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_open_issues_30d.png" width="100%"></td><td align="center"><img src="plots/github_clones_30d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_stars_30d.png" width="100%"></td><td align="center"><img src="plots/github_clones_30d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_forks_30d.png" width="100%"></td><td align="center"><img src="plots/github_open_issues_30d.png" width="100%"></td></tr>
 <tr><td align="center"><img src="plots/discord_members_30d.png" width="100%"></td><td align="center"><img src="plots/discord_messages_30d.png" width="100%"></td></tr>
 </table>
 
@@ -63,8 +63,8 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 
 <table width="100%">
 <tr><td align="center"><img src="plots/pypi_365d.png" width="100%"></td><td align="center"><img src="plots/npm_365d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_stars_365d.png" width="100%"></td><td align="center"><img src="plots/github_forks_365d.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_open_issues_365d.png" width="100%"></td><td align="center"><img src="plots/github_clones_365d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_stars_365d.png" width="100%"></td><td align="center"><img src="plots/github_clones_365d.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_forks_365d.png" width="100%"></td><td align="center"><img src="plots/github_open_issues_365d.png" width="100%"></td></tr>
 <tr><td align="center"><img src="plots/discord_members_365d.png" width="100%"></td><td align="center"><img src="plots/discord_messages_365d.png" width="100%"></td></tr>
 </table>
 
@@ -72,8 +72,8 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 
 <table width="100%">
 <tr><td align="center"><img src="plots/pypi_all.png" width="100%"></td><td align="center"><img src="plots/npm_all.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_stars_all.png" width="100%"></td><td align="center"><img src="plots/github_forks_all.png" width="100%"></td></tr>
-<tr><td align="center"><img src="plots/github_open_issues_all.png" width="100%"></td><td align="center"><img src="plots/github_clones_all.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_stars_all.png" width="100%"></td><td align="center"><img src="plots/github_clones_all.png" width="100%"></td></tr>
+<tr><td align="center"><img src="plots/github_forks_all.png" width="100%"></td><td align="center"><img src="plots/github_open_issues_all.png" width="100%"></td></tr>
 <tr><td align="center"><img src="plots/discord_members_all.png" width="100%"></td><td align="center"><img src="plots/discord_messages_all.png" width="100%"></td></tr>
 </table>
 

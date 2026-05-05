@@ -71,7 +71,7 @@ def filter_by_window(series, days):
     return filtered
 
 
-SOURCE_ORDER = ["pypi", "npm", "github_stars", "github_forks", "github_open_issues", "github_clones", "discord_members", "discord_messages"]
+SOURCE_ORDER = ["pypi", "npm", "github_stars", "github_clones", "github_forks", "github_open_issues", "discord_members", "discord_messages"]
 
 # Sources to plot as cumulative totals instead of daily values.
 CUMULATIVE_SOURCES = {"pypi", "npm", "discord_messages", "github_clones"}
