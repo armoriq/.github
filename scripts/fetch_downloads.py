@@ -568,14 +568,24 @@ def main():
         print(f"  -> {len(results)} data points fetched, {added} new, {updated} updated")
 
     github_rows = fetch_github_repo_stats(config)
-    github_added = 0
+    github_added = github_updated = 0
     for row in github_rows:
         key = (row["date"], row["package"], row["source"])
         if key not in existing:
             new_rows.append(row)
             github_added += 1
+        elif (
+            row["source"] == "github_clones"
+            and row["date"] >= recency_cutoff
+            and row["downloads"] != existing[key]
+        ):
+            # GitHub's /traffic/clones endpoint returns a rolling 14-day window
+            # whose recent days are still accruing — refresh the stored count
+            # whenever the API reports a different value within the recency window.
+            csv_updates[key] = row["downloads"]
+            github_updated += 1
     if github_rows:
-        print(f"GitHub rows fetched: {len(github_rows)}, {github_added} new")
+        print(f"GitHub rows fetched: {len(github_rows)}, {github_added} new, {github_updated} updated")
 
     discord_guilds = config.get("discord", []) or []
     today = date.today().isoformat()

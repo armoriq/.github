@@ -26,6 +26,7 @@ TIME_WINDOWS = [
 ]
 
 SOURCE_LABELS = {
+    "developer_activations": "Developer Activations (PyPI + npm + Clones)",
     "pypi": "PyPI",
     "npm": "npm",
     "github_stars": "GitHub Stars",
@@ -35,6 +36,12 @@ SOURCE_LABELS = {
     "discord_members": "Discord Members",
     "discord_messages": "Discord Messages",
 }
+
+# Pseudo-source: combined cumulative across pypi + npm + github_clones,
+# summed over all packages. Not present in the CSV; rendered by its own
+# plotting function.
+COMBINED_ACTIVATIONS_KEY = "developer_activations"
+COMBINED_ACTIVATIONS_SOURCES = {"pypi", "npm", "github_clones"}
 
 # Sources that represent point-in-time snapshots rather than daily increments.
 SNAPSHOT_SOURCES = {"github_stars", "github_forks", "github_open_issues", "discord_members"}
@@ -71,7 +78,7 @@ def filter_by_window(series, days):
     return filtered
 
 
-SOURCE_ORDER = ["pypi", "npm", "github_stars", "github_forks", "github_open_issues", "github_clones", "discord_members", "discord_messages"]
+SOURCE_ORDER = [COMBINED_ACTIVATIONS_KEY, "pypi", "npm", "github_stars", "github_clones", "github_forks", "github_open_issues", "discord_members", "discord_messages"]
 
 # Sources to plot as cumulative totals instead of daily values.
 CUMULATIVE_SOURCES = {"pypi", "npm", "discord_messages", "github_clones"}
@@ -90,6 +97,51 @@ def make_cumulative(points):
         total += v
         cumulative.append((d, total))
     return cumulative
+
+
+def generate_combined_activations_plot(all_series, window_label, window_name, days):
+    """Plot cumulative pypi + npm + github_clones summed across all packages."""
+    daily_totals = defaultdict(int)
+    for (pkg, source), points in all_series.items():
+        if source not in COMBINED_ACTIVATIONS_SOURCES:
+            continue
+        for d, v in points:
+            daily_totals[d] += v
+    if not daily_totals:
+        return None
+
+    sorted_points = sorted(daily_totals.items())
+    cumulative = make_cumulative(sorted_points)
+
+    if days is not None:
+        cutoff = date.today() - timedelta(days=days)
+        cumulative = [(d, v) for d, v in cumulative if d >= cutoff]
+    if not cumulative:
+        return None
+
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(7, 4))
+    dates = [p[0] for p in cumulative]
+    values = [p[1] for p in cumulative]
+    ax.plot(dates, values, marker="o", markersize=3, linewidth=1.5,
+            label="All packages")
+    ax.set_title(
+        f"{SOURCE_LABELS[COMBINED_ACTIVATIONS_KEY]} — {window_name}",
+        fontsize=16, fontweight="bold",
+    )
+    ax.set_xlabel("Date", fontsize=14)
+    ax.set_ylabel("Cumulative Downloads", fontsize=14)
+    ax.legend(fontsize=14)
+    ax.grid(True, alpha=0.3)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+    ax.tick_params(axis="x", rotation=45, labelsize=14)
+    ax.tick_params(axis="y", labelsize=14)
+    plt.tight_layout()
+    filename = f"{COMBINED_ACTIVATIONS_KEY}_{window_label}.png"
+    path = os.path.join(PLOTS_DIR, filename)
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return filename
 
 
 def generate_plots(all_series, window_label, window_name, days):
@@ -254,6 +306,7 @@ def main():
 
     print("Generating plots...")
     for label, name, days in TIME_WINDOWS:
+        generate_combined_activations_plot(series, label, name, days)
         generate_plots(series, label, name, days)
 
     print("Updating README...")
