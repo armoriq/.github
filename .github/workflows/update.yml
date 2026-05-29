@@ -43,7 +43,7 @@ jobs:
       # PR — both required by the org ruleset on `main`.
       - name: Open signed PR with updates
         id: cpr
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sign-commits: true
