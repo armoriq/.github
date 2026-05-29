@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update:
@@ -23,6 +24,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Compute update date
+        id: date
+        run: echo "value=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
       - name: Fetch download data
         env:
           GH_TOKEN: ${{ secrets.TRACTION_GH_TOKEN }}
@@ -33,10 +38,31 @@ jobs:
       - name: Generate plots and update README
         run: python scripts/generate_plots.py
 
-      - name: Commit and push changes
+      # Commits are created via the GitHub API (sign-commits: true) so they
+      # carry a verified github-actions[bot] signature, and changes land via a
+      # PR — both required by the org ruleset on `main`.
+      - name: Open signed PR with updates
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sign-commits: true
+          commit-message: "Update download stats for ${{ steps.date.outputs.value }}"
+          title: "Update download stats for ${{ steps.date.outputs.value }}"
+          body: |
+            Automated daily refresh of traction data, plots, and README.
+          branch: auto/update-stats-${{ steps.date.outputs.value }}
+          delete-branch: true
+          add-paths: |
+            data
+            plots
+            README.md
+
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ plots/ README.md
-          git diff --staged --quiet || git commit -m "Update download stats for $(date -u +%Y-%m-%d)"
-          git push
+          gh pr merge --auto --squash \
+            "${{ steps.cpr.outputs.pull-request-number }}" \
+            -R "${{ github.repository }}"
