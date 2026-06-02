@@ -58,11 +58,18 @@ jobs:
             plots
             README.md
 
-      - name: Enable auto-merge
+      # Try an immediate squash merge first — with the org ruleset's approval
+      # requirement dropped, the PR is usually already in CLEAN state by the
+      # time we get here. `gh pr merge --auto` fails ("Pull request is in clean
+      # status") when there's nothing for auto-merge to wait on, so we only
+      # fall back to --auto when the immediate merge is rejected because the
+      # PR is genuinely pending (e.g. a status check still running).
+      - name: Merge PR
         if: steps.cpr.outputs.pull-request-number
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.cpr.outputs.pull-request-number }}
+          REPO: ${{ github.repository }}
         run: |
-          gh pr merge --auto --squash \
-            "${{ steps.cpr.outputs.pull-request-number }}" \
-            -R "${{ github.repository }}"
+          gh pr merge --squash --delete-branch "$PR" -R "$REPO" \
+            || gh pr merge --auto --squash --delete-branch "$PR" -R "$REPO"
