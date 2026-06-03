@@ -12,6 +12,7 @@ github:
     - armoriq/armoriq-sdk-customer
     - armoriq/conmap
     - armoriq/armorClaude
+    - armoriq/armorCodex
 
 discord:
   - 1450796662334423135
