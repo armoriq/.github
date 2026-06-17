@@ -2,29 +2,29 @@
 
 Automated daily tracking of package and repository traction metrics from PyPI, npm, and GitHub.
 
-**Last updated:** 2026-06-15
+**Last updated:** 2026-06-17
 
 ## Tracked Items
 
-**Total downloads (PyPI + npm + GitHub clones):** 16,327
+**Total downloads (PyPI + npm + GitHub clones):** 16,571
 
 | Item | Source | Metric | Value |
 |------|--------|--------|-------|
-| @armoriq/armorclaw | npm | Total Downloads | 835 |
-| @armoriq/sdk | npm | Total Downloads | 2,844 |
-| ArmorIQ | Discord Members | Latest Value | 497 |
+| @armoriq/armorclaw | npm | Total Downloads | 843 |
+| @armoriq/sdk | npm | Total Downloads | 2,863 |
+| ArmorIQ | Discord Members | Latest Value | 498 |
 | ArmorIQ | Discord Messages | Total Messages | 635 |
 | armoriq-openclaw-plugin | npm | Total Downloads | 204 |
-| armoriq-sdk | PyPI | Total Downloads | 10,521 |
-| armoriq/armorClaude | GitHub Clones | Total Downloads | 1,491 |
+| armoriq-sdk | PyPI | Total Downloads | 10,586 |
+| armoriq/armorClaude | GitHub Clones | Total Downloads | 1,513 |
 | armoriq/armorClaude | GitHub Forks | Latest Value | 1 |
 | armoriq/armorClaude | GitHub Open Issues | Latest Value | 6 |
 | armoriq/armorClaude | GitHub Stars | Latest Value | 44 |
-| armoriq/armorCodex | GitHub Clones | Total Downloads | 352 |
+| armoriq/armorCodex | GitHub Clones | Total Downloads | 479 |
 | armoriq/armorCodex | GitHub Forks | Latest Value | 1 |
-| armoriq/armorCodex | GitHub Open Issues | Latest Value | 3 |
+| armoriq/armorCodex | GitHub Open Issues | Latest Value | 7 |
 | armoriq/armorCodex | GitHub Stars | Latest Value | 1 |
-| armoriq/armorclaw | GitHub Clones | Total Downloads | 80 |
+| armoriq/armorclaw | GitHub Clones | Total Downloads | 83 |
 | armoriq/armorclaw | GitHub Forks | Latest Value | 5 |
 | armoriq/armorclaw | GitHub Open Issues | Latest Value | 5 |
 | armoriq/armorclaw | GitHub Stars | Latest Value | 285 |
