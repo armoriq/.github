@@ -1,0 +1,204 @@
+{
+  "last_updated": "2026-08-18",
+  "download_total": 30426,
+  "download_total_label": "PyPI + npm + GitHub clones",
+  "download_total_sources": [
+    "github_clones",
+    "npm",
+    "pypi"
+  ],
+  "items": [
+    {
+      "package": "@armoriq/armorclaw",
+      "source": "npm",
+      "label": "npm",
+      "metric": "Total Downloads",
+      "value": 1421,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "@armoriq/sdk",
+      "source": "npm",
+      "label": "npm",
+      "metric": "Total Downloads",
+      "value": 6008,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "ArmorIQ",
+      "source": "discord_members",
+      "label": "Discord Members",
+      "metric": "Latest Value",
+      "value": 523,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "ArmorIQ",
+      "source": "discord_messages",
+      "label": "Discord Messages",
+      "metric": "Total Messages",
+      "value": 661,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq-openclaw-plugin",
+      "source": "npm",
+      "label": "npm",
+      "metric": "Total Downloads",
+      "value": 204,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq-sdk",
+      "source": "pypi",
+      "label": "PyPI",
+      "metric": "Total Downloads",
+      "value": 19331,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorClaude",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 2336,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorClaude",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 1,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorClaude",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 18,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorClaude",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 44,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorCodex",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 975,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorCodex",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 1,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorCodex",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 15,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorCodex",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 2,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 151,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 5,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 5,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 285,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 2,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 5,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 3,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/conmap",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 1,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/conmap",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 6,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/conmap",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 3,
+      "counts_toward_download_total": false
+    }
+  ]
+}
