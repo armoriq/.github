@@ -2,6 +2,7 @@
 """Generate trend plots from traction data."""
 
 import csv
+import json
 import os
 import sys
 from collections import defaultdict
@@ -14,6 +15,7 @@ import matplotlib.dates as mdates
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(ROOT_DIR, "data", "downloads.csv")
+SUMMARY_PATH = os.path.join(ROOT_DIR, "data", "summary.json")
 PLOTS_DIR = os.path.join(ROOT_DIR, "plots")
 
 # (label, days or None for all-time)
@@ -213,15 +215,11 @@ def generate_plots(all_series, window_label, window_name, days):
     return generated
 
 
-def update_readme(series):
-    """Regenerate README.md with current plots and package table."""
-    readme_path = os.path.join(ROOT_DIR, "README.md")
-
-    # Build package table
-    packages = sorted(set(series.keys()))
-    table_rows = []
-    pkg_download_total = 0
-    for pkg, source in packages:
+def compute_items(series):
+    """Reduce the series into one row per (package, source), plus the headline download total."""
+    items = []
+    download_total = 0
+    for pkg, source in sorted(set(series.keys())):
         points = series[(pkg, source)]
         if source in SNAPSHOT_SOURCES:
             metric = "Latest Value"
@@ -232,14 +230,46 @@ def update_readme(series):
         else:
             metric = "Total Downloads"
             value = sum(dl for _, dl in points)
-            if source in DOWNLOAD_TOTAL_SOURCES:
-                pkg_download_total += value
-        table_rows.append(
-            f"| {pkg} | {SOURCE_LABELS.get(source, source)} | {metric} | {value:,} |"
-        )
+        counts = metric == "Total Downloads" and source in DOWNLOAD_TOTAL_SOURCES
+        if counts:
+            download_total += value
+        items.append({
+            "package": pkg,
+            "source": source,
+            "label": SOURCE_LABELS.get(source, source),
+            "metric": metric,
+            "value": value,
+            "counts_toward_download_total": counts,
+        })
+    return items, download_total
+
+
+def write_summary(items, download_total):
+    """Machine-readable mirror of the README table, so consumers do not parse markdown."""
+    summary = {
+        "last_updated": date.today().isoformat(),
+        "download_total": download_total,
+        "download_total_label": DOWNLOAD_TOTAL_LABEL,
+        "download_total_sources": sorted(DOWNLOAD_TOTAL_SOURCES),
+        "items": items,
+    }
+    with open(SUMMARY_PATH, "w") as f:
+        json.dump(summary, f, indent=2)
+        f.write("\n")
+    print(f"  Wrote {SUMMARY_PATH}")
+
+
+def update_readme(items, download_total):
+    """Regenerate README.md with current plots and package table."""
+    readme_path = os.path.join(ROOT_DIR, "README.md")
+
+    table_rows = [
+        f"| {it['package']} | {it['label']} | {it['metric']} | {it['value']:,} |"
+        for it in items
+    ]
 
     table = (
-        f"**Total downloads ({DOWNLOAD_TOTAL_LABEL}):** {pkg_download_total:,}\n\n"
+        f"**Total downloads ({DOWNLOAD_TOTAL_LABEL}):** {download_total:,}\n\n"
         "| Item | Source | Metric | Value |\n"
         "|------|--------|--------|-------|\n"
         + "\n".join(table_rows)
@@ -310,7 +340,9 @@ def main():
         generate_plots(series, label, name, days)
 
     print("Updating README...")
-    update_readme(series)
+    items, download_total = compute_items(series)
+    update_readme(items, download_total)
+    write_summary(items, download_total)
 
     print("Done!")
     return 0
