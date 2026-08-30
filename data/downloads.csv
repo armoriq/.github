@@ -3821,7 +3821,12 @@ date,package,source,downloads
 2026-08-28,ArmorIQ,discord_members,675
 2026-08-27,ArmorIQ,discord_messages,11
 2026-08-28,armoriq-sdk,pypi,43
-2026-08-28,@armoriq/sdk,npm,0
-2026-08-28,@armoriq/armorclaw,npm,0
+2026-08-28,@armoriq/sdk,npm,29
+2026-08-28,@armoriq/armorclaw,npm,1
 2026-08-29,ArmorIQ,discord_members,677
 2026-08-28,ArmorIQ,discord_messages,6
+2026-08-29,armoriq-sdk,pypi,77
+2026-08-29,@armoriq/sdk,npm,11
+2026-08-29,@armoriq/armorclaw,npm,0
+2026-08-30,ArmorIQ,discord_members,674
+2026-08-29,ArmorIQ,discord_messages,17
