@@ -1,0 +1,267 @@
+# Moves cards on the "Daily updates" board (project 4) as work progresses.
+#
+#   PR linked to the issue        -> In review
+#   linked PRs merged             -> In dev
+#   that code is now in main      -> In platform
+#
+# "Item added -> Backlog" is left to the project's own built-in workflow; it
+# works and needs no code here.
+#
+# WHY NOT THE BUILT-IN "Pull request merged" WORKFLOW:
+# it fires on ANY linked PR merging, whatever the target. With stacked PRs
+# (split/571-p1 -> p2 -> p3 ...) the first merge lands in a sibling branch, not
+# dev, and the card would jump to "In dev" while the work is still four
+# branches away. It also can't distinguish dev from main, so it can never
+# express "In platform". Disable that built-in when this ships, or the two
+# will fight and cards will flicker.
+#
+# RECONCILING, NOT EVENT-DRIVEN: each run recomputes the correct column from
+# current PR state, so a missed webhook cannot strand a card, and re-running is
+# always safe.
+#
+# CARDS ONLY EVER MOVE FORWARD, and the two planning columns are left alone —
+# see MANUAL_COLUMNS and the rank check below.
+#
+# Requires the armoriq-project-sync App (id 4877216) to hold:
+#   organization_projects: write   (move the card)
+#   issues: read                   (read the issue)
+#   pull_requests: read            (linked PRs, their base and merge commit)
+#   contents: read                 (is that merge commit an ancestor of main)
+# The last two are ADDITIONS to what it had for issues-to-project.
+name: Board status
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report moves without making them"
+        type: boolean
+        default: true
+      max_moves:
+        description: "Safety cap on moves in one run"
+        type: string
+        default: "100"
+
+concurrency:
+  group: board-status
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  status:
+    name: Reconcile board status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the private key is present
+        env:
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${APP_PRIVATE_KEY:-}" ]; then
+            echo "::error::APP_PRIVATE_KEY secret is not set."
+            exit 1
+          fi
+
+      - name: Mint an App installation token
+        id: app-token
+        uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+        with:
+          app-id: "4877216"
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Reconcile
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          ORG: ${{ github.repository_owner }}
+          PROJECT_NUMBER: "4"
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          MAX_MOVES: ${{ inputs.max_moves || '100' }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const org = process.env.ORG;
+            const projectNumber = Number(process.env.PROJECT_NUMBER);
+            const dryRun = process.env.DRY_RUN === 'true';
+            const maxMoves = Number(process.env.MAX_MOVES) || 100;
+
+            // Column order. A card is only ever moved to a HIGHER rank, so a
+            // follow-up PR opened after release cannot drag a shipped issue
+            // back to "In review".
+            const RANK = {
+              'Backlog': 0, 'Next Task': 1, 'In Progress': 2,
+              'In review': 3, 'In dev': 4, 'In platform': 5, 'Archive': 6,
+            };
+            // Planning columns a human owns. Automation never touches a card
+            // parked here — otherwise "this is next week's work" would be
+            // overwritten the moment someone opened a draft PR.
+            const MANUAL_COLUMNS = new Set(['Next Task', 'In Progress']);
+
+            // --- resolve project + Status field ------------------------------
+            const meta = await github.graphql(`
+              query($org:String!, $num:Int!) {
+                organization(login:$org) { projectV2(number:$num) {
+                  id title
+                  field(name:"Status") {
+                    ... on ProjectV2SingleSelectField { id options { id name } }
+                  } } }
+              }`, { org, num: projectNumber });
+
+            const project = meta.organization?.projectV2;
+            if (!project?.field) {
+              core.setFailed(`Project #${projectNumber} or its Status field is not readable.`);
+              return;
+            }
+            const optionId = Object.fromEntries(project.field.options.map(o => [o.name, o.id]));
+            for (const needed of ['In review', 'In dev', 'In platform']) {
+              if (!optionId[needed]) {
+                core.setFailed(`The Status field has no "${needed}" option. Found: ${project.field.options.map(o => o.name).join(', ')}`);
+                return;
+              }
+            }
+            core.info(`Project: ${project.title} (#${projectNumber})`);
+
+            // --- every card, with its issue and linked PRs --------------------
+            const cards = [];
+            let cursor = null;
+            for (;;) {
+              const page = await github.graphql(`
+                query($id:ID!, $after:String) {
+                  node(id:$id) { ... on ProjectV2 {
+                    items(first:50, after:$after) {
+                      pageInfo { hasNextPage endCursor }
+                      nodes {
+                        id
+                        fieldValueByName(name:"Status") {
+                          ... on ProjectV2ItemFieldSingleSelectValue { name }
+                        }
+                        content {
+                          ... on Issue {
+                            number state
+                            repository { name owner { login } }
+                            closedByPullRequestsReferences(first:20, includeClosedPrs:true) {
+                              nodes {
+                                number merged baseRefName
+                                mergeCommit { oid }
+                                repository { name owner { login } }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    } } }
+                }`, { id: project.id, after: cursor });
+              const items = page.node.items;
+              for (const n of items.nodes) if (n.content?.number) cards.push(n);
+              if (!items.pageInfo.hasNextPage) break;
+              cursor = items.pageInfo.endCursor;
+            }
+            core.info(`Cards with an issue: ${cards.length}`);
+
+            // --- is a commit already contained in main? -----------------------
+            // compare(base=main, head=sha).ahead_by === 0  <=>  sha is an
+            // ancestor of main. Cached per sha: a stack of five PRs merged the
+            // same week would otherwise re-ask for each one.
+            const inMainCache = new Map();
+            async function isInMain(owner, repo, sha) {
+              const key = `${owner}/${repo}@${sha}`;
+              if (inMainCache.has(key)) return inMainCache.get(key);
+              let result = false;
+              for (const base of ['main', 'master']) {
+                try {
+                  const cmp = await github.rest.repos.compareCommitsWithBasehead({
+                    owner, repo, basehead: `${base}...${sha}`,
+                  });
+                  result = cmp.data.ahead_by === 0;
+                  break;               // the branch existed; trust this answer
+                } catch (err) {
+                  if (err.status === 404) continue;   // no such branch, try the next
+                  core.warning(`compare failed for ${key}: ${err.message}`);
+                  break;
+                }
+              }
+              inMainCache.set(key, result);
+              return result;
+            }
+
+            // --- decide the column for each card ------------------------------
+            const moves = [];
+            for (const card of cards) {
+              const issue = card.content;
+              const current = card.fieldValueByName?.name ?? null;
+              const label = `${issue.repository.name}#${issue.number}`;
+
+              if (current && MANUAL_COLUMNS.has(current)) continue;
+
+              const prs = issue.closedByPullRequestsReferences?.nodes ?? [];
+              if (prs.length === 0) continue;          // nothing linked: leave alone
+
+              let target = null;
+              const merged = prs.filter(p => p.merged);
+              if (merged.length === prs.length) {
+                // Every linked PR is merged. Is all of it in main yet?
+                let allInMain = true;
+                for (const p of merged) {
+                  const sha = p.mergeCommit?.oid;
+                  if (!sha) { allInMain = false; break; }
+                  if (!(await isInMain(p.repository.owner.login, p.repository.name, sha))) {
+                    allInMain = false;
+                    break;
+                  }
+                }
+                target = allInMain ? 'In platform' : 'In dev';
+              } else {
+                target = 'In review';                  // at least one still open
+              }
+
+              const curRank = current ? (RANK[current] ?? -1) : -1;
+              if (RANK[target] <= curRank) continue;   // forward only
+
+              moves.push({ itemId: card.id, label, from: current ?? 'No Status', to: target });
+            }
+
+            core.info(`Moves to make: ${moves.length}`);
+
+            // --- apply --------------------------------------------------------
+            const batch = moves.slice(0, maxMoves);
+            let done = 0, failed = 0;
+            for (const m of batch) {
+              if (dryRun) { core.info(`would move ${m.label}: ${m.from} -> ${m.to}`); continue; }
+              try {
+                await github.graphql(`
+                  mutation($project:ID!, $item:ID!, $field:ID!, $opt:String!) {
+                    updateProjectV2ItemFieldValue(input:{
+                      projectId:$project, itemId:$item, fieldId:$field,
+                      value:{ singleSelectOptionId:$opt }
+                    }) { projectV2Item { id } }
+                  }`, { project: project.id, item: m.itemId, field: project.field.id, opt: optionId[m.to] });
+                done++;
+                core.info(`moved ${m.label}: ${m.from} -> ${m.to}`);
+              } catch (err) {
+                failed++;
+                core.warning(`failed to move ${m.label}: ${err.message}`);
+              }
+            }
+
+            const byTarget = {};
+            for (const m of batch) byTarget[m.to] = (byTarget[m.to] || 0) + 1;
+            const summary = [
+              '### Board status', '',
+              '| | |', '|---|---:|',
+              `| Cards examined | ${cards.length} |`,
+              `| Moves identified | ${moves.length} |`,
+              `| Mode | ${dryRun ? 'DRY RUN' : 'live'} |`,
+              ...(dryRun ? [] : [`| Moved | **${done}**${failed ? ` (${failed} failed)` : ''} |`]),
+              '',
+              ...Object.entries(byTarget).map(([k, v]) => `- ${v} -> **${k}**`),
+            ];
+            if (moves.length > maxMoves) summary.push('', `Capped at ${maxMoves}; the rest follow next run.`);
+            await core.summary.addRaw(summary.join('\n')).write();
+
+            // A run that intended moves and landed none is a failure — silence
+            // would be indistinguishable from "nothing to do".
+            if (!dryRun && failed > 0 && done === 0) {
+              core.setFailed(`All ${failed} moves failed. Check the App's organization_projects permission.`);
+            }
