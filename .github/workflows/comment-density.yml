@@ -30,8 +30,10 @@ jobs:
           set -euo pipefail
 
           gh api "repos/$REPO/pulls/$PR" \
-            -H "Accept: application/vnd.github.v3.diff" \
-          | awk '
+            -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff
+
+          rc=0
+          awk '
             /^diff --git/ { file = $NF; sub(/^b\//, "", file); next }
 
             file !~ /\.(tsx?|jsx?|py|go)$/ { next }
@@ -44,7 +46,6 @@ jobs:
               total++
               if (line ~ /^[[:space:]]*(\/\/|\/\*|\*\/|\* )/) { comments++; next }
               if (file ~ /\.py$/ && line ~ /^[[:space:]]*#/) { comments++; next }
-              if (file ~ /\.py$/ && line ~ /^[[:space:]]*("""|'"'"''"'"''"'"')/) { comments++; next }
             }
 
             END {
@@ -59,7 +60,6 @@ jobs:
 
               ratio = comments / total
               code = total - comments
-              fail = (ratio > max)
 
               printf "### Comment density check\n\n" > sum
               printf "| | |\n|---|---:|\n" > sum
@@ -68,13 +68,17 @@ jobs:
               printf "| Code lines | **%d** |\n", code > sum
               printf "| Comment ratio | **%.2f** |\n", ratio > sum
               printf "| Limit | %.2f |\n", max > sum
+              close(sum)
 
-              if (fail) {
-                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" > sum
+              if (ratio > max) {
+                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" >> sum
+                close(sum)
                 printf "::error::Comment ratio %.2f exceeds limit %.2f. Remove comments that restate what the code does.\n", ratio, max
                 exit 1
               }
 
               printf "::notice::Comment ratio %.2f within limit %.2f — OK\n", ratio, max
             }
-          '
+          ' /tmp/pr.diff || rc=$?
+
+          exit "$rc"
