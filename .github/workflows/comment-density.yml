@@ -1,0 +1,108 @@
+name: Comment density
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  MAX_COMMENT_RATIO: "0.05"
+
+jobs:
+  density:
+    name: Comment density
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check comment density in added lines
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          MAX_RATIO: ${{ env.MAX_COMMENT_RATIO }}
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          if ! gh api "repos/$REPO/pulls/$PR" \
+               -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff 2>/dev/null; then
+            sleep 3
+            if ! gh api "repos/$REPO/pulls/$PR" \
+                 -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff; then
+              echo "::error::Failed to fetch PR diff after retry. This is an infrastructure issue, not a code issue."
+              exit 1
+            fi
+          fi
+
+          rc=0
+          awk '
+            /^diff --git/ { file = $NF; sub(/^b\//, "", file); in_block = 0; next }
+
+            file !~ /\.(tsx?|jsx?|py|go)$/ { next }
+            file ~ /(node_modules|vendor|dist|build|\.gen\.|generated|__generated__|\.min\.)/ { next }
+
+            /^\+\+\+/ { next }
+            /^\+/ {
+              line = substr($0, 2)
+              if (line ~ /^[[:space:]]*$/) next
+              total++
+
+              if (file ~ /\.py$/) {
+                if (line ~ /^[[:space:]]*#/) { comments++; next }
+                next
+              }
+
+              if (in_block) {
+                comments++
+                if (line ~ /\*\//) in_block = 0
+                next
+              }
+              if (line ~ /^[[:space:]]*\/\*/) {
+                comments++
+                if (line !~ /\*\//) in_block = 1
+                next
+              }
+              if (line ~ /^[[:space:]]*\/\//) { comments++; next }
+            }
+
+            END {
+              max = ENVIRON["MAX_RATIO"] + 0
+              sum = ENVIRON["GITHUB_STEP_SUMMARY"]
+
+              if (total == 0) {
+                print "::notice::No source files changed — skipped."
+                printf "### Comment density check\n\nNo source lines added.\n" > sum
+                close(sum)
+                exit 0
+              }
+
+              ratio = comments / total
+              code = total - comments
+
+              printf "### Comment density check\n\n" > sum
+              printf "| | |\n|---|---:|\n" > sum
+              printf "| Added source lines | **%d** |\n", total > sum
+              printf "| Comment lines | **%d** |\n", comments > sum
+              printf "| Code lines | **%d** |\n", code > sum
+              printf "| Comment ratio | **%.2f** |\n", ratio > sum
+              printf "| Limit | %.2f |\n", max > sum
+
+              if (ratio > max) {
+                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" > sum
+                close(sum)
+                printf "::error::Comment ratio %.2f exceeds limit %.2f. Remove comments that restate what the code does.\n", ratio, max
+                exit 1
+              }
+
+              close(sum)
+              printf "::notice::Comment ratio %.2f within limit %.2f — OK\n", ratio, max
+            }
+          ' /tmp/pr.diff || rc=$?
+
+          exit "$rc"
