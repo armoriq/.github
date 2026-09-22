@@ -26,15 +26,23 @@ jobs:
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
           MAX_RATIO: ${{ env.MAX_COMMENT_RATIO }}
+        shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
-          gh api "repos/$REPO/pulls/$PR" \
-            -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff
+          if ! gh api "repos/$REPO/pulls/$PR" \
+               -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff 2>/dev/null; then
+            sleep 3
+            if ! gh api "repos/$REPO/pulls/$PR" \
+                 -H "Accept: application/vnd.github.v3.diff" > /tmp/pr.diff; then
+              echo "::error::Failed to fetch PR diff after retry. This is an infrastructure issue, not a code issue."
+              exit 1
+            fi
+          fi
 
           rc=0
           awk '
-            /^diff --git/ { file = $NF; sub(/^b\//, "", file); next }
+            /^diff --git/ { file = $NF; sub(/^b\//, "", file); in_block = 0; next }
 
             file !~ /\.(tsx?|jsx?|py|go)$/ { next }
             file ~ /(node_modules|vendor|dist|build|\.gen\.|generated|__generated__|\.min\.)/ { next }
@@ -44,8 +52,23 @@ jobs:
               line = substr($0, 2)
               if (line ~ /^[[:space:]]*$/) next
               total++
-              if (line ~ /^[[:space:]]*(\/\/|\/\*|\*\/|\* )/) { comments++; next }
-              if (file ~ /\.py$/ && line ~ /^[[:space:]]*#/) { comments++; next }
+
+              if (file ~ /\.py$/) {
+                if (line ~ /^[[:space:]]*#/) { comments++; next }
+                next
+              }
+
+              if (in_block) {
+                comments++
+                if (line ~ /\*\//) in_block = 0
+                next
+              }
+              if (line ~ /^[[:space:]]*\/\*/) {
+                comments++
+                if (line !~ /\*\//) in_block = 1
+                next
+              }
+              if (line ~ /^[[:space:]]*\/\//) { comments++; next }
             }
 
             END {
@@ -55,6 +78,7 @@ jobs:
               if (total == 0) {
                 print "::notice::No source files changed — skipped."
                 printf "### Comment density check\n\nNo source lines added.\n" > sum
+                close(sum)
                 exit 0
               }
 
@@ -68,15 +92,15 @@ jobs:
               printf "| Code lines | **%d** |\n", code > sum
               printf "| Comment ratio | **%.2f** |\n", ratio > sum
               printf "| Limit | %.2f |\n", max > sum
-              close(sum)
 
               if (ratio > max) {
-                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" >> sum
+                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" > sum
                 close(sum)
                 printf "::error::Comment ratio %.2f exceeds limit %.2f. Remove comments that restate what the code does.\n", ratio, max
                 exit 1
               }
 
+              close(sum)
               printf "::notice::Comment ratio %.2f within limit %.2f — OK\n", ratio, max
             }
           ' /tmp/pr.diff || rc=$?
