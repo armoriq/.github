@@ -1,16 +1,3 @@
-# Enforces the org-wide comment density cap.
-#
-# Deploy target: armoriq/.github  ->  .github/workflows/comment-density.yml
-# Enforced via the org ruleset's `workflows` rule, so it runs on every repo
-# the ruleset covers without needing a copy in each repo.
-#
-# Policy: added lines in a PR must not exceed MAX_COMMENT_RATIO comments-to-code.
-# Only source files are checked (.ts, .tsx, .js, .jsx, .py, .go).
-# Generated files, lockfiles, and vendored code are excluded.
-#
-# This catches "what" comments (// set x to 5, # initialize the list) at
-# review time. "Why" comments (// OPA returns 403 not 401 for this case)
-# are fine and rare enough to stay under the ratio.
 name: Comment density
 
 on:
@@ -26,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MAX_COMMENT_RATIO: "0.10"
+  MAX_COMMENT_RATIO: "0.05"
 
 jobs:
   density:
@@ -42,13 +29,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Fetch the raw unified diff for the PR.
           gh api "repos/$REPO/pulls/$PR" \
             -H "Accept: application/vnd.github.v3.diff" > pr.diff
 
-          # Count added comment lines vs added code lines per source file.
-          # Only lines starting with "+" (excluding the +++ header) are new.
-          # Source extensions: .ts .tsx .js .jsx .py .go
           awk '
             /^diff --git/ {
               file = $NF
@@ -56,29 +39,18 @@ jobs:
               next
             }
 
-            # Skip non-source files
             file !~ /\.(tsx?|jsx?|py|go)$/ { next }
-
-            # Skip generated / vendored files
             file ~ /(node_modules|vendor|dist|build|\.gen\.|generated|__generated__|\.min\.)/ { next }
 
-            # Only look at added lines (skip the +++ header)
             /^\+\+\+/ { next }
             /^\+/ {
-              line = substr($0, 2)           # strip leading "+"
-
-              # Skip blank lines — they are neither code nor comments
+              line = substr($0, 2)
               if (line ~ /^[[:space:]]*$/) next
 
               total++
 
-              # TS/JS/Go single-line comments
               if (line ~ /^[[:space:]]*(\/\/|\/\*|\*\/|\* )/) { comments++; next }
-
-              # Python single-line comments
               if (file ~ /\.py$/ && line ~ /^[[:space:]]*#/) { comments++; next }
-
-              # Python docstrings (triple quotes on their own line)
               if (file ~ /\.py$/ && line ~ /^[[:space:]]*("""|'"'"''"'"''"'"')/) { comments++; next }
             }
 
@@ -102,7 +74,6 @@ jobs:
 
           cat result.txt
 
-          # Parse result for summary and exit code
           TOTAL=$(awk '/^Added lines:/ { print $3 }' result.txt)
           COMMENTS=$(awk '/^Added lines:/ { print $5 }' result.txt)
           CODE=$(awk '/^Added lines:/ { print $7 }' result.txt)
@@ -124,21 +95,14 @@ jobs:
           if [ "$STATUS" = "FAIL" ]; then
             {
               echo ""
-              echo "**Too many comments.** Most comments restate what the code does."
-              echo "Keep only comments that explain *why* something non-obvious happens."
-              echo ""
-              echo "Common offenders to remove:"
-              echo "- \`// Initialize the connection\` before \`initConnection()\`"
-              echo "- \`# Set the timeout to 30\` above \`timeout = 30\`"
-              echo "- \`// Loop through users\` before \`for (const user of users)\`"
-              echo "- Multi-line JSDoc that restates parameter names"
+              echo "**Too many comments.** Keep only comments that explain *why*, not *what*."
             } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::Comment ratio ${RATIO} exceeds limit ${MAX_RATIO}. Remove comments that restate what the code does — keep only comments that explain why."
+            echo "::error::Comment ratio ${RATIO} exceeds limit ${MAX_RATIO}. Remove comments that restate what the code does."
             exit 1
           fi
 
           if [ -z "$TOTAL" ]; then
-            echo "::notice::No source files changed — comment density check skipped."
+            echo "::notice::No source files changed — skipped."
           else
             echo "::notice::Comment ratio ${RATIO} within limit ${MAX_RATIO} — OK"
           fi
