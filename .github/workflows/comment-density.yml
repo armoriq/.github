@@ -30,14 +30,9 @@ jobs:
           set -euo pipefail
 
           gh api "repos/$REPO/pulls/$PR" \
-            -H "Accept: application/vnd.github.v3.diff" > pr.diff
-
-          awk '
-            /^diff --git/ {
-              file = $NF
-              sub(/^b\//, "", file)
-              next
-            }
+            -H "Accept: application/vnd.github.v3.diff" \
+          | awk '
+            /^diff --git/ { file = $NF; sub(/^b\//, "", file); next }
 
             file !~ /\.(tsx?|jsx?|py|go)$/ { next }
             file ~ /(node_modules|vendor|dist|build|\.gen\.|generated|__generated__|\.min\.)/ { next }
@@ -46,63 +41,40 @@ jobs:
             /^\+/ {
               line = substr($0, 2)
               if (line ~ /^[[:space:]]*$/) next
-
               total++
-
               if (line ~ /^[[:space:]]*(\/\/|\/\*|\*\/|\* )/) { comments++; next }
               if (file ~ /\.py$/ && line ~ /^[[:space:]]*#/) { comments++; next }
               if (file ~ /\.py$/ && line ~ /^[[:space:]]*("""|'"'"''"'"''"'"')/) { comments++; next }
             }
 
             END {
+              max = ENVIRON["MAX_RATIO"] + 0
+              sum = ENVIRON["GITHUB_STEP_SUMMARY"]
+
               if (total == 0) {
-                printf "No source lines added.\n"
+                print "::notice::No source files changed — skipped."
+                printf "### Comment density check\n\nNo source lines added.\n" > sum
                 exit 0
               }
 
               ratio = comments / total
-              printf "Added lines: %d total, %d comments, %d code\n", total, comments, total - comments
-              printf "Comment ratio: %.2f (limit: %s)\n", ratio, ENVIRON["MAX_RATIO"]
+              code = total - comments
+              fail = (ratio > max)
 
-              if (ratio + 0 > ENVIRON["MAX_RATIO"] + 0) {
-                printf "FAIL\n"
+              printf "### Comment density check\n\n" > sum
+              printf "| | |\n|---|---:|\n" > sum
+              printf "| Added source lines | **%d** |\n", total > sum
+              printf "| Comment lines | **%d** |\n", comments > sum
+              printf "| Code lines | **%d** |\n", code > sum
+              printf "| Comment ratio | **%.2f** |\n", ratio > sum
+              printf "| Limit | %.2f |\n", max > sum
+
+              if (fail) {
+                printf "\n**Too many comments.** Keep only comments that explain *why*, not *what*.\n" > sum
+                printf "::error::Comment ratio %.2f exceeds limit %.2f. Remove comments that restate what the code does.\n", ratio, max
                 exit 1
               }
-              printf "OK\n"
+
+              printf "::notice::Comment ratio %.2f within limit %.2f — OK\n", ratio, max
             }
-          ' pr.diff > result.txt
-
-          cat result.txt
-
-          TOTAL=$(awk '/^Added lines:/ { print $3 }' result.txt)
-          COMMENTS=$(awk '/^Added lines:/ { print $5 }' result.txt)
-          CODE=$(awk '/^Added lines:/ { print $7 }' result.txt)
-          RATIO=$(awk '/^Comment ratio:/ { print $3 }' result.txt)
-          STATUS=$(tail -1 result.txt)
-
-          {
-            echo "### Comment density check"
-            echo ""
-            echo "| | |"
-            echo "|---|---:|"
-            echo "| Added source lines | **${TOTAL:-0}** |"
-            echo "| Comment lines | **${COMMENTS:-0}** |"
-            echo "| Code lines | **${CODE:-0}** |"
-            echo "| Comment ratio | **${RATIO:-0.00}** |"
-            echo "| Limit | ${MAX_RATIO} |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "$STATUS" = "FAIL" ]; then
-            {
-              echo ""
-              echo "**Too many comments.** Keep only comments that explain *why*, not *what*."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::Comment ratio ${RATIO} exceeds limit ${MAX_RATIO}. Remove comments that restate what the code does."
-            exit 1
-          fi
-
-          if [ -z "$TOTAL" ]; then
-            echo "::notice::No source files changed — skipped."
-          else
-            echo "::notice::Comment ratio ${RATIO} within limit ${MAX_RATIO} — OK"
-          fi
+          '
