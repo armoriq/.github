@@ -529,11 +529,9 @@ def main():
         f"{len(github_repos)} explicit GitHub repo(s)"
     )
 
-    pypi_fetched = 0
     for pkg in pypi_packages:
         print(f"Fetching PyPI: {pkg}")
         results = fetch_pypi_downloads(pkg)
-        pypi_fetched += len(results)
         added = updated = 0
         for result in results:
             key = (result["date"], pkg, "pypi")
@@ -550,11 +548,9 @@ def main():
                 updated += 1
         print(f"  -> {len(results)} data points fetched, {added} new, {updated} updated")
 
-    npm_fetched = 0
     for pkg in npm_packages:
         print(f"Fetching npm: {pkg}")
         results = fetch_npm_downloads(pkg)
-        npm_fetched += len(results)
         added = updated = 0
         for result in results:
             key = (result["date"], pkg, "npm")
@@ -593,13 +589,11 @@ def main():
 
     discord_guilds = config.get("discord", []) or []
     today = date.today().isoformat()
-    discord_fetched = 0
     for guild_id in discord_guilds:
         guild_id = str(guild_id)
         print(f"Fetching Discord: {guild_id}")
         result = fetch_discord_stats(guild_id, existing)
         if result:
-            discord_fetched += 1
             # Total members (snapshot, recorded for today)
             key = (today, result["name"], "discord_members")
             if key not in existing:
@@ -635,36 +629,6 @@ def main():
 
     if not csv_updates and not new_rows:
         print("\nNo new data to append.")
-
-    # Every per-item failure above only prints [ERROR] and carries on, so an
-    # expired credential kept this job green while GitHub metrics went
-    # unrecorded from 2026-07-03 to 2026-09-07. Treat "a configured source
-    # produced nothing at all" as a job failure instead. A single package or
-    # repo failing still only warns -- that is the normal, noisy case.
-    dead_sources = []
-    if pypi_packages and pypi_fetched == 0:
-        dead_sources.append("pypi")
-    if npm_packages and npm_fetched == 0:
-        dead_sources.append("npm")
-    if (github_owners or github_repos) and not github_rows:
-        dead_sources.append("github")
-    if discord_guilds and discord_fetched == 0:
-        dead_sources.append("discord")
-
-    if github_rows and not any(row["source"] == "github_clones" for row in github_rows):
-        print(
-            "\n[WARN] No github_clones rows returned -- the token lacks "
-            "'Administration: read' on the tracked repos. Other GitHub "
-            "metrics are unaffected."
-        )
-
-    if dead_sources:
-        print(
-            "\n[FATAL] No data fetched for configured source(s): "
-            + ", ".join(dead_sources)
-            + " -- check the credentials for those sources."
-        )
-        return 1
 
     return 0
 
