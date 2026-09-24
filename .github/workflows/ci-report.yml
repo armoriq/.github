@@ -1,0 +1,21 @@
+name: CI report
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ci-report:
+    name: CI report
+    uses: armoriq/.github/.github/workflows/reusable-ci-report.yml@ci/ci-report-wait
+    secrets: inherit

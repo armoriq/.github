@@ -2,20 +2,26 @@ name: Reusable CI report
 on:
   workflow_call:
 permissions:
-  contents: read
+  actions: read
   checks: read
+  contents: read
   pull-requests: write
 jobs:
   report:
     runs-on: ubuntu-24.04
+    timeout-minutes: 310
     steps:
-      - name: Post CI summary comment
+      - name: Wait for checks and post summary
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WAIT_VAR: ${{ vars.CI_REPORT_WAIT_MINUTES }}
+          WAIT_SECRET: ${{ secrets.CI_REPORT_WAIT_MINUTES }}
         shell: bash
         run: |
           set -euo pipefail
@@ -23,13 +29,64 @@ jobs:
             echo "Not a pull request event. Skipping."
             exit 0
           fi
+
+          if [ -n "${WAIT_VAR:-}" ]; then
+            WAIT_MINUTES="${WAIT_VAR}"
+            WAIT_SOURCE="repo variable CI_REPORT_WAIT_MINUTES"
+          elif [ -n "${WAIT_SECRET:-}" ]; then
+            WAIT_MINUTES="${WAIT_SECRET}"
+            WAIT_SOURCE="repo secret CI_REPORT_WAIT_MINUTES"
+          else
+            WAIT_MINUTES="15"
+            WAIT_SOURCE="default"
+          fi
+          if ! [[ "${WAIT_MINUTES}" =~ ^[0-9]+$ ]] || [ "${WAIT_MINUTES}" -lt 1 ] || [ "${WAIT_MINUTES}" -gt 300 ]; then
+            echo "::error::The ${WAIT_SOURCE} must be a whole number of minutes from 1 to 300."
+            exit 1
+          fi
+          echo "Waiting up to ${WAIT_MINUTES} minutes (${WAIT_SOURCE})."
+
+          gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate --jq '.jobs[].id' > own.txt
+
+          fetch_checks() {
+            gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" --paginate \
+              --jq '.check_runs[] | [(.id | tostring), .name, .status, (.conclusion // "pending")] | @tsv' \
+              | awk -F'\t' 'NR == FNR { own[$1] = 1; next } !($1 in own)' own.txt - > checks.tsv
+          }
+
+          DEADLINE=$(( $(date +%s) + WAIT_MINUTES * 60 ))
+          TIMED_OUT="no"
+          while :; do
+            fetch_checks
+            PENDING="$(awk -F'\t' '$3 != "completed"' checks.tsv | wc -l | tr -d ' ')"
+            if [ "${PENDING}" -eq 0 ]; then
+              break
+            fi
+            if [ "$(date +%s)" -ge "${DEADLINE}" ]; then
+              TIMED_OUT="yes"
+              break
+            fi
+            echo "${PENDING} check(s) still running."
+            sleep 30
+          done
+
           MARKER="<!-- org-ci-report -->"
-          ROWS="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" --jq '.check_runs[] | "- " + .name + ": " + .status + " / " + (.conclusion // "pending")')"
-          BODY="$(printf '%s\n\nCI report (advisory, informational only)\n\n%s\n\nFull logs: %s' "${MARKER}" "${ROWS}" "${RUN_URL}")"
+          ROWS="$(awk -F'\t' '{ print "- " $2 ": " $3 " / " $4 }' checks.tsv)"
+          NOTE=""
+          if [ "${TIMED_OUT}" = "yes" ]; then
+            NOTE="$(printf 'Stopped waiting after %s minutes with %s check(s) still running.\n\n' "${WAIT_MINUTES}" "${PENDING}")"
+          fi
+          BODY="$(printf '%s\n\nCI report (advisory, informational only)\n\n%s%s\n\nFull logs: %s' "${MARKER}" "${NOTE}" "${ROWS}" "${RUN_URL}")"
+
+          if [ "${HEAD_REPO}" != "${REPO}" ]; then
+            echo "${BODY}" >> "${GITHUB_STEP_SUMMARY}"
+            echo "Fork pull request. The token cannot comment, so the report is in the run summary."
+            exit 0
+          fi
+
           EXISTING="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate --jq '.[] | select(.body | contains("<!-- org-ci-report -->")) | .id' | head -n 1)"
           if [ -n "${EXISTING:-}" ]; then
             gh api "repos/${REPO}/issues/comments/${EXISTING}" --method PATCH -f body="${BODY}" > /dev/null
           else
             gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --method POST -f body="${BODY}" > /dev/null
           fi
-          exit 0
