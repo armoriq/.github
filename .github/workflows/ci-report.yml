@@ -17,5 +17,5 @@ concurrency:
 jobs:
   ci-report:
     name: CI report
-    uses: armoriq/.github/.github/workflows/reusable-ci-report.yml@ci/ci-report-wait
+    uses: armoriq/.github/.github/workflows/reusable-ci-report.yml@main
     secrets: inherit
