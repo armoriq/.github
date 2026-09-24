@@ -7,8 +7,8 @@ on:
 permissions:
   actions: read
   checks: read
-  contents: read
   pull-requests: write
+  statuses: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -17,5 +17,10 @@ concurrency:
 jobs:
   ci-report:
     name: CI report
-    uses: armoriq/.github/.github/workflows/reusable-ci-report.yml@main
-    secrets: inherit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 310
+    steps:
+      - uses: armoriq/.github/.github/actions/ci-report@ci/ci-report-wait
+        with:
+          wait_variable: ${{ vars.CI_REPORT_WAIT_MINUTES }}
+          wait_secret: ${{ secrets.CI_REPORT_WAIT_MINUTES }}

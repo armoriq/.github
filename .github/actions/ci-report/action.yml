@@ -1,0 +1,15 @@
+name: CI report
+description: Waits for a pull request's other checks to finish, then posts one summary comment.
+inputs:
+  token:
+    description: Token that can read checks and actions and write pull request comments.
+    default: ${{ github.token }}
+  wait_variable:
+    description: Value of the repo variable CI_REPORT_WAIT_MINUTES.
+    default: ""
+  wait_secret:
+    description: Value of the repo secret CI_REPORT_WAIT_MINUTES.
+    default: ""
+runs:
+  using: node24
+  main: main.mjs
