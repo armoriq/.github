@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-07",
-  "download_total": 33008,
+  "last_updated": "2026-09-24",
+  "download_total": 36348,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1749,
+      "value": 1798,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 6695,
+      "value": 7038,
       "counts_toward_download_total": true
     },
     {
@@ -29,7 +29,7 @@
       "source": "discord_members",
       "label": "Discord Members",
       "metric": "Latest Value",
-      "value": 675,
+      "value": 682,
       "counts_toward_download_total": false
     },
     {
@@ -37,7 +37,7 @@
       "source": "discord_messages",
       "label": "Discord Messages",
       "metric": "Total Messages",
-      "value": 959,
+      "value": 1004,
       "counts_toward_download_total": false
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 20898,
+      "value": 21334,
       "counts_toward_download_total": true
     },
     {
@@ -61,99 +61,11 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 2336,
+      "value": 3373,
       "counts_toward_download_total": true
     },
     {
       "package": "armoriq/armorClaude",
-      "source": "github_forks",
-      "label": "GitHub Forks",
-      "metric": "Latest Value",
-      "value": 1,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorClaude",
-      "source": "github_open_issues",
-      "label": "GitHub Open Issues",
-      "metric": "Latest Value",
-      "value": 18,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorClaude",
-      "source": "github_stars",
-      "label": "GitHub Stars",
-      "metric": "Latest Value",
-      "value": 44,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorCodex",
-      "source": "github_clones",
-      "label": "GitHub Clones",
-      "metric": "Total Downloads",
-      "value": 975,
-      "counts_toward_download_total": true
-    },
-    {
-      "package": "armoriq/armorCodex",
-      "source": "github_forks",
-      "label": "GitHub Forks",
-      "metric": "Latest Value",
-      "value": 1,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorCodex",
-      "source": "github_open_issues",
-      "label": "GitHub Open Issues",
-      "metric": "Latest Value",
-      "value": 15,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorCodex",
-      "source": "github_stars",
-      "label": "GitHub Stars",
-      "metric": "Latest Value",
-      "value": 2,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorclaw",
-      "source": "github_clones",
-      "label": "GitHub Clones",
-      "metric": "Total Downloads",
-      "value": 151,
-      "counts_toward_download_total": true
-    },
-    {
-      "package": "armoriq/armorclaw",
-      "source": "github_forks",
-      "label": "GitHub Forks",
-      "metric": "Latest Value",
-      "value": 5,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorclaw",
-      "source": "github_open_issues",
-      "label": "GitHub Open Issues",
-      "metric": "Latest Value",
-      "value": 5,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armorclaw",
-      "source": "github_stars",
-      "label": "GitHub Stars",
-      "metric": "Latest Value",
-      "value": 285,
-      "counts_toward_download_total": false
-    },
-    {
-      "package": "armoriq/armoriq-sdk-customer",
       "source": "github_forks",
       "label": "GitHub Forks",
       "metric": "Latest Value",
@@ -161,23 +73,31 @@
       "counts_toward_download_total": false
     },
     {
-      "package": "armoriq/armoriq-sdk-customer",
+      "package": "armoriq/armorClaude",
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 5,
+      "value": 34,
       "counts_toward_download_total": false
     },
     {
-      "package": "armoriq/armoriq-sdk-customer",
+      "package": "armoriq/armorClaude",
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 3,
+      "value": 46,
       "counts_toward_download_total": false
     },
     {
-      "package": "armoriq/conmap",
+      "package": "armoriq/armorCodex",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 1178,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorCodex",
       "source": "github_forks",
       "label": "GitHub Forks",
       "metric": "Latest Value",
@@ -185,11 +105,107 @@
       "counts_toward_download_total": false
     },
     {
+      "package": "armoriq/armorCodex",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 28,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorCodex",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 5,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 228,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 4,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 7,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armorclaw",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 277,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 1185,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 0,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_open_issues",
+      "label": "GitHub Open Issues",
+      "metric": "Latest Value",
+      "value": 34,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/armoriq-sdk-customer",
+      "source": "github_stars",
+      "label": "GitHub Stars",
+      "metric": "Latest Value",
+      "value": 2,
+      "counts_toward_download_total": false
+    },
+    {
+      "package": "armoriq/conmap",
+      "source": "github_clones",
+      "label": "GitHub Clones",
+      "metric": "Total Downloads",
+      "value": 10,
+      "counts_toward_download_total": true
+    },
+    {
+      "package": "armoriq/conmap",
+      "source": "github_forks",
+      "label": "GitHub Forks",
+      "metric": "Latest Value",
+      "value": 0,
+      "counts_toward_download_total": false
+    },
+    {
       "package": "armoriq/conmap",
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 6,
+      "value": 12,
       "counts_toward_download_total": false
     },
     {
@@ -197,7 +213,7 @@
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 3,
+      "value": 1,
       "counts_toward_download_total": false
     }
   ]

@@ -5,14 +5,41 @@ on:
     - cron: "0 6 * * *"  # Daily at 6 AM UTC
   workflow_dispatch:       # Manual trigger
 
+# The job token is used for checkout only. Everything else runs on an App
+# installation token: the job token is scoped to this repo alone (so it cannot
+# read the private tracked repos, nor any repo's /traffic/clones), and the org
+# forbids Actions-created pull requests.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Check the App credentials are present
+        env:
+          TRACKER_APP_ID: ${{ vars.TRACKER_APP_ID }}
+          TRACKER_APP_PRIVATE_KEY: ${{ secrets.TRACKER_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${TRACKER_APP_ID:-}" ]; then
+            echo "::error::TRACKER_APP_ID variable is not set."
+            exit 1
+          fi
+          if [ -z "${TRACKER_APP_PRIVATE_KEY:-}" ]; then
+            echo "::error::TRACKER_APP_PRIVATE_KEY secret is not set."
+            exit 1
+          fi
+
+      # Scoped to every repo the App is installed on in this org, so one token
+      # covers both the tracked repos (read) and this repo (write).
+      - name: Mint an App installation token
+        id: app-token
+        uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+        with:
+          app-id: ${{ vars.TRACKER_APP_ID }}
+          private-key: ${{ secrets.TRACKER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -28,10 +55,12 @@ jobs:
         id: date
         run: echo "value=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
+      # No GITHUB_TOKEN fallback on purpose: the job token cannot see the
+      # private tracked repos, so falling back to it would silently record
+      # partial data instead of failing.
       - name: Fetch download data
         env:
-          GH_TOKEN: ${{ secrets.TRACTION_GH_TOKEN }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: python scripts/fetch_downloads.py
 
@@ -39,13 +68,14 @@ jobs:
         run: python scripts/generate_plots.py
 
       # Commits are created via the GitHub API (sign-commits: true) so they
-      # carry a verified github-actions[bot] signature, and changes land via a
-      # PR — both required by the org ruleset on `main`.
+      # carry a verified signature. The App token is required here because the
+      # org disallows Actions-created PRs ("GitHub Actions is not permitted to
+      # create or approve pull requests") — an App is not GitHub Actions.
       - name: Open signed PR with updates
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           sign-commits: true
           commit-message: "Update download stats for ${{ steps.date.outputs.value }}"
           title: "Update download stats for ${{ steps.date.outputs.value }}"
@@ -58,16 +88,15 @@ jobs:
             plots
             README.md
 
-      # Try an immediate squash merge first — with the org ruleset's approval
-      # requirement dropped, the PR is usually already in CLEAN state by the
-      # time we get here. `gh pr merge --auto` fails ("Pull request is in clean
-      # status") when there's nothing for auto-merge to wait on, so we only
-      # fall back to --auto when the immediate merge is rejected because the
-      # PR is genuinely pending (e.g. a status check still running).
+      # `main` in this repo carries no rules (the org ruleset
+      # `main-protect-only-PRs` excludes repositories named `.github`), so the
+      # PR is CLEAN immediately and the first merge normally succeeds.
+      # `gh pr merge --auto` errors with "Pull request is in clean status" when
+      # there is nothing to wait on, so --auto is only the fallback.
       - name: Merge PR
         if: steps.cpr.outputs.pull-request-number
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR: ${{ steps.cpr.outputs.pull-request-number }}
           REPO: ${{ github.repository }}
         run: |
