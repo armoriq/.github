@@ -1,0 +1,18 @@
+name: Regression gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regression-gate:
+    name: Regression gate
+    uses: armoriq/.github/.github/workflows/reusable-regression-gate.yml@main
