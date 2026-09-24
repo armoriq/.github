@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 310
     steps:
-      - uses: armoriq/.github/.github/actions/ci-report@ci/ci-report-wait
+      - uses: armoriq/.github/.github/actions/ci-report@65670bfd9d24cb5d2a48338714909facacd48a63
         with:
           wait_variable: ${{ vars.CI_REPORT_WAIT_MINUTES }}
           wait_secret: ${{ secrets.CI_REPORT_WAIT_MINUTES }}
