@@ -1,6 +1,6 @@
 {
   "last_updated": "2026-09-24",
-  "download_total": 36348,
+  "download_total": 36385,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1798,
+      "value": 1813,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7038,
+      "value": 7060,
       "counts_toward_download_total": true
     },
     {
@@ -37,7 +37,7 @@
       "source": "discord_messages",
       "label": "Discord Messages",
       "metric": "Total Messages",
-      "value": 1004,
+      "value": 1008,
       "counts_toward_download_total": false
     },
     {
