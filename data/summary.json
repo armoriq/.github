@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-25",
-  "download_total": 36387,
+  "last_updated": "2026-09-26",
+  "download_total": 36495,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1813,
+      "value": 1820,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7060,
+      "value": 7124,
       "counts_toward_download_total": true
     },
     {
@@ -29,7 +29,7 @@
       "source": "discord_members",
       "label": "Discord Members",
       "metric": "Latest Value",
-      "value": 682,
+      "value": 681,
       "counts_toward_download_total": false
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 21336,
+      "value": 21373,
       "counts_toward_download_total": true
     },
     {
@@ -69,7 +69,7 @@
       "source": "github_forks",
       "label": "GitHub Forks",
       "metric": "Latest Value",
-      "value": 2,
+      "value": 3,
       "counts_toward_download_total": false
     },
     {
@@ -77,7 +77,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 34,
+      "value": 38,
       "counts_toward_download_total": false
     },
     {
@@ -85,7 +85,7 @@
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 46,
+      "value": 47,
       "counts_toward_download_total": false
     },
     {
@@ -101,7 +101,7 @@
       "source": "github_forks",
       "label": "GitHub Forks",
       "metric": "Latest Value",
-      "value": 1,
+      "value": 2,
       "counts_toward_download_total": false
     },
     {
@@ -109,7 +109,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 28,
+      "value": 31,
       "counts_toward_download_total": false
     },
     {
@@ -117,7 +117,7 @@
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 5,
+      "value": 6,
       "counts_toward_download_total": false
     },
     {
@@ -173,7 +173,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 34,
+      "value": 45,
       "counts_toward_download_total": false
     },
     {
