@@ -6,16 +6,24 @@ jobs:
   add-to-board:
     runs-on: ubuntu-latest
     steps:
+      - name: Mint an App installation token
+        id: app-token
+        uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+        with:
+          # armoriq-project-sync; the app id is public
+          app-id: "4877216"
+          private-key: ${{ secrets.PROJECT_SYNC_APP_PRIVATE_KEY }}
+
       - name: Add to project
         id: add
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/armoriq/projects/1
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ steps.app-token.outputs.token }}
       - name: Set Status to Backlog
         if: steps.add.outputs.itemId != ''
         env:
-          GH_TOKEN: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh project item-edit \
             --id "${{ steps.add.outputs.itemId }}" \
