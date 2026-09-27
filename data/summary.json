@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-26",
-  "download_total": 36495,
+  "last_updated": "2026-09-27",
+  "download_total": 36691,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1820,
+      "value": 1837,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7124,
+      "value": 7243,
       "counts_toward_download_total": true
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 21373,
+      "value": 21433,
       "counts_toward_download_total": true
     },
     {
@@ -149,7 +149,7 @@
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 277,
+      "value": 276,
       "counts_toward_download_total": false
     },
     {
