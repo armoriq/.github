@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-29",
-  "download_total": 36792,
+  "last_updated": "2026-09-30",
+  "download_total": 38758,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1844,
+      "value": 1845,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7317,
+      "value": 7334,
       "counts_toward_download_total": true
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 21453,
+      "value": 21681,
       "counts_toward_download_total": true
     },
     {
@@ -61,7 +61,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 3373,
+      "value": 4049,
       "counts_toward_download_total": true
     },
     {
@@ -77,7 +77,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 55,
+      "value": 58,
       "counts_toward_download_total": false
     },
     {
@@ -93,7 +93,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 1178,
+      "value": 1588,
       "counts_toward_download_total": true
     },
     {
@@ -125,7 +125,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 228,
+      "value": 233,
       "counts_toward_download_total": true
     },
     {
@@ -149,7 +149,7 @@
       "source": "github_stars",
       "label": "GitHub Stars",
       "metric": "Latest Value",
-      "value": 276,
+      "value": 275,
       "counts_toward_download_total": false
     },
     {
@@ -157,7 +157,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 1185,
+      "value": 1811,
       "counts_toward_download_total": true
     },
     {
@@ -173,7 +173,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 58,
+      "value": 52,
       "counts_toward_download_total": false
     },
     {
@@ -189,7 +189,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 10,
+      "value": 13,
       "counts_toward_download_total": true
     },
     {
