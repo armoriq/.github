@@ -9,6 +9,13 @@
 # machine-generated and carry no review burden. In the historical data,
 # lockfiles alone pushed several 11-line dependency bumps past the
 # 1000-line threshold.
+#
+# Deletion exemption: a PR that removes code and adds at most
+# DELETION_MAX_ADDED lines is reviewed by reading what goes, not what
+# comes; splitting it into 1000-line slices spreads one decision over
+# many PRs. It is exempt from both caps while it deletes more than it
+# adds and adds at most DELETION_MAX_ADDED lines. Additions and
+# deletions are printed in the summary for every PR.
 name: PR size
 
 on:
@@ -27,6 +34,7 @@ concurrency:
 env:
   MAX_LINES: "1000"
   MAX_FILES: "100"
+  DELETION_MAX_ADDED: "200"
 
 jobs:
   size:
@@ -86,7 +94,7 @@ jobs:
           # fail closed if the picture is incomplete. Never guess at a size we
           # could not measure.
           gh api "repos/$REPO/pulls/$PR/files" --paginate \
-            --jq '.[] | [.filename, (.additions + .deletions)] | @tsv' > files.tsv
+            --jq '.[] | [.filename, (.additions + .deletions), .additions, .deletions] | @tsv' > files.tsv
 
           expected=$(gh api "repos/$REPO/pulls/$PR" --jq '.changed_files')
           retrieved=$(wc -l < files.tsv)
@@ -111,12 +119,34 @@ jobs:
           fi
 
           # EXCLUDE reaches awk via ENVIRON (not -v) so its backslashes survive.
-          read -r total counted excluded < <(awk -F'\t' '
+          read -r total counted excluded added deleted < <(awk -F'\t' '
             $1 ~ ENVIRON["EXCLUDE"] { e += $2; next }
-            NF { t += $2; c++ }
-            END { printf "%d %d %d\n", t, c, e }' files.tsv)
+            NF { t += $2; c++; a += $3; d += $4 }
+            END { printf "%d %d %d %d %d\n", t, c, e, a, d }' files.tsv)
 
-          echo "Changed lines (excluding lockfiles): $total across $counted files"
+          echo "Changed lines (excluding lockfiles): $total across $counted files ($added added, $deleted deleted)"
+
+          # --- Deletion exemption ----------------------------------------------
+
+          if [ "$deleted" -gt "$added" ] && [ "$added" -le "$DELETION_MAX_ADDED" ]; then
+
+            echo "::notice::Deletion PR (+$added / -$deleted) — size caps skipped; additions under $DELETION_MAX_ADDED."
+
+            {
+
+              echo "### PR size check :white_check_mark:"
+
+              echo ""
+
+              echo "Deletion PR: **+$added / -$deleted** across $counted files."
+
+              echo "Exempt from the size caps: it removes more than it adds and adds at most $DELETION_MAX_ADDED lines."
+
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            exit 0
+
+          fi
 
           {
             echo "### PR size check"
