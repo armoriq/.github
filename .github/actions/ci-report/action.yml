@@ -10,6 +10,9 @@ inputs:
   wait_secret:
     description: Value of the repo secret CI_REPORT_WAIT_MINUTES.
     default: ""
+  scorecard:
+    description: Path of the scorecard JSON. Empty leaves the scorecard out of the report.
+    default: ""
 runs:
   using: node24
   main: main.mjs
