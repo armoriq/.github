@@ -8,6 +8,7 @@ import {
   renderReport,
   resolveWaitMinutes,
 } from "./report.mjs";
+import { scoreMergeability } from "../scorecard/mergeability.mjs";
 
 const env = process.env;
 const repo = env.GITHUB_REPOSITORY;
@@ -45,6 +46,36 @@ async function listAll(path, pick) {
     url = page.next;
   }
   return items;
+}
+
+const THREADS_QUERY = `query($owner: String!, $name: String!, $number: Int!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      reviewThreads(first: 100, after: $after) { nodes { isResolved } pageInfo { hasNextPage endCursor } }
+    }
+  }
+}`;
+
+async function countUnresolvedThreads(number) {
+  const [owner, name] = repo.split("/");
+  let unresolved = 0;
+  for (let after = null, more = true; more; ) {
+    const { data } = await request(env.GITHUB_GRAPHQL_URL, {
+      method: "POST",
+      body: { query: THREADS_QUERY, variables: { owner, name, number, after } },
+    });
+    if (data.errors) throw new Error(`Review threads query failed: ${data.errors[0].message}`);
+    const threads = data.data.repository.pullRequest.reviewThreads;
+    unresolved += threads.nodes.filter((thread) => !thread.isResolved).length;
+    ({ hasNextPage: more, endCursor: after } = threads.pageInfo);
+  }
+  return unresolved;
+}
+
+async function withMergeability(scorecard, checks, number) {
+  if (!scorecard?.mergeability) return scorecard;
+  const mergeability = scoreMergeability({ facts: scorecard.mergeability, checks, unresolvedThreads: await countUnresolvedThreads(number) });
+  return { ...scorecard, metrics: [{ name: "Mergeability", ...mergeability }, ...scorecard.metrics] };
 }
 
 async function loadScorecard(path) {
@@ -96,7 +127,7 @@ async function main() {
     timedOut: checks.some((check) => !check.done),
     waitMinutes: minutes,
     runUrl: `${env.GITHUB_SERVER_URL}/${repo}/actions/runs/${env.GITHUB_RUN_ID}`,
-    scorecard: await loadScorecard(env.INPUT_SCORECARD),
+    scorecard: await withMergeability(await loadScorecard(env.INPUT_SCORECARD), checks, pr.number),
   });
   await appendFile(env.GITHUB_STEP_SUMMARY, `${body}\n`);
 
