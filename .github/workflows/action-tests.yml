@@ -18,4 +18,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - run: npm ci --prefix .github/actions/scorecard --ignore-scripts --no-audit --no-fund
       - run: node --test ".github/actions/**/*.test.mjs"
