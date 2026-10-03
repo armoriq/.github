@@ -7,7 +7,7 @@ const SKIPPED_KEYS = new Set(["parent", "loc", "range", "tokens", "comments"]);
 const SCRIPT_FILES = "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}";
 const linter = new Linter({ configType: "flat" });
 
-function children(node) {
+export function children(node) {
   return Object.entries(node)
     .filter(([key]) => !SKIPPED_KEYS.has(key))
     .flatMap(([, value]) => (Array.isArray(value) ? value : [value]))
@@ -46,9 +46,11 @@ function smallestRangeAt(ranges, line) {
   return containing.reduce((best, range) => (range.end - range.start < best.end - best.start ? range : best));
 }
 
+export const parserOptionsFor = (filename) => ({ ecmaFeatures: { jsx: /x$/.test(filename) }, loc: true, range: true });
+
 export function measureScript(code, filename) {
   if (!code) return [];
-  const parserOptions = { ecmaFeatures: { jsx: /x$/.test(filename) }, loc: true, range: true };
+  const parserOptions = parserOptionsFor(filename);
   const config = [
     {
       files: [SCRIPT_FILES],
