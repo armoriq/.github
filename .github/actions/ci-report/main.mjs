@@ -47,6 +47,16 @@ async function listAll(path, pick) {
   return items;
 }
 
+async function loadScorecard(path) {
+  if (!path) return undefined;
+  try {
+    return JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    console.log(`::warning::Scorecard not loaded from ${path}: ${error.message}`);
+    return null;
+  }
+}
+
 async function main() {
   const { pull_request: pr } = JSON.parse(await readFile(env.GITHUB_EVENT_PATH, "utf8"));
   if (!pr) {
@@ -86,6 +96,7 @@ async function main() {
     timedOut: checks.some((check) => !check.done),
     waitMinutes: minutes,
     runUrl: `${env.GITHUB_SERVER_URL}/${repo}/actions/runs/${env.GITHUB_RUN_ID}`,
+    scorecard: await loadScorecard(env.INPUT_SCORECARD),
   });
   await appendFile(env.GITHUB_STEP_SUMMARY, `${body}\n`);
 
