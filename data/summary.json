@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-10-03",
-  "download_total": 39155,
+  "last_updated": "2026-10-04",
+  "download_total": 39516,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1847,
+      "value": 1848,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7409,
+      "value": 7456,
       "counts_toward_download_total": true
     },
     {
@@ -29,7 +29,7 @@
       "source": "discord_members",
       "label": "Discord Members",
       "metric": "Latest Value",
-      "value": 709,
+      "value": 719,
       "counts_toward_download_total": false
     },
     {
@@ -37,7 +37,7 @@
       "source": "discord_messages",
       "label": "Discord Messages",
       "metric": "Total Messages",
-      "value": 1031,
+      "value": 1038,
       "counts_toward_download_total": false
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 21763,
+      "value": 21779,
       "counts_toward_download_total": true
     },
     {
@@ -61,7 +61,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 4080,
+      "value": 4199,
       "counts_toward_download_total": true
     },
     {
@@ -93,7 +93,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 1600,
+      "value": 1770,
       "counts_toward_download_total": true
     },
     {
@@ -109,7 +109,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 50,
+      "value": 46,
       "counts_toward_download_total": false
     },
     {
@@ -125,7 +125,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 264,
+      "value": 272,
       "counts_toward_download_total": true
     },
     {
