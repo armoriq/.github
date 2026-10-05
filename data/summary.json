@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-10-04",
-  "download_total": 39516,
+  "last_updated": "2026-10-05",
+  "download_total": 39720,
   "download_total_label": "PyPI + npm + GitHub clones",
   "download_total_sources": [
     "github_clones",
@@ -13,7 +13,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 1848,
+      "value": 1850,
       "counts_toward_download_total": true
     },
     {
@@ -21,7 +21,7 @@
       "source": "npm",
       "label": "npm",
       "metric": "Total Downloads",
-      "value": 7456,
+      "value": 7498,
       "counts_toward_download_total": true
     },
     {
@@ -29,7 +29,7 @@
       "source": "discord_members",
       "label": "Discord Members",
       "metric": "Latest Value",
-      "value": 719,
+      "value": 735,
       "counts_toward_download_total": false
     },
     {
@@ -37,7 +37,7 @@
       "source": "discord_messages",
       "label": "Discord Messages",
       "metric": "Total Messages",
-      "value": 1038,
+      "value": 1056,
       "counts_toward_download_total": false
     },
     {
@@ -53,7 +53,7 @@
       "source": "pypi",
       "label": "PyPI",
       "metric": "Total Downloads",
-      "value": 21779,
+      "value": 21847,
       "counts_toward_download_total": true
     },
     {
@@ -61,7 +61,7 @@
       "source": "github_clones",
       "label": "GitHub Clones",
       "metric": "Total Downloads",
-      "value": 4199,
+      "value": 4291,
       "counts_toward_download_total": true
     },
     {
@@ -77,7 +77,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 58,
+      "value": 55,
       "counts_toward_download_total": false
     },
     {
@@ -109,7 +109,7 @@
       "source": "github_open_issues",
       "label": "GitHub Open Issues",
       "metric": "Latest Value",
-      "value": 46,
+      "value": 44,
       "counts_toward_download_total": false
     },
     {
