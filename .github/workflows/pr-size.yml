@@ -77,6 +77,22 @@ jobs:
             exit 0
           fi
 
+          # --- Back-merge exemption -------------------------------------------
+          # A back-merge brings an integration branch up to date with main and
+          # carries every commit it is missing, so like a promotion it cannot be
+          # split. Same-repo PRs only, for the same reason as above.
+          if [ "$HEAD_REPO" = "$REPO" ] && \
+             echo "$HEAD" | grep -qEi '^(main|master)$' && \
+             echo "$BASE" | grep -qEi '^(dev|develop|development|staging|stage|next|qa|uat)$'; then
+            echo "::notice::Back-merge PR ($HEAD -> $BASE), size check skipped."
+            {
+              echo "### PR size check :white_check_mark:"
+              echo ""
+              echo "Back-merge PR (\`$HEAD\` -> \`$BASE\`), exempt from the size cap."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           # --- Collect changed files ------------------------------------------
           # The files API returns at most 3000 entries, however many the PR
           # really touches:
