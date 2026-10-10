@@ -27,13 +27,13 @@ jobs:
           fetch-depth: 0
       - name: Scorecard
         continue-on-error: true
-        uses: armoriq/.github/.github/actions/scorecard@8c5ed87cd5a719f040d6191ca7ac1270dc78a07a
+        uses: armoriq/.github/.github/actions/scorecard@fb786658484eddbdd59f9ad323dbd436d850b05a
         with:
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
           base_ref: ${{ github.event.pull_request.base.ref }}
           default_branch: ${{ github.event.repository.default_branch }}
-      - uses: armoriq/.github/.github/actions/ci-report@8c5ed87cd5a719f040d6191ca7ac1270dc78a07a
+      - uses: armoriq/.github/.github/actions/ci-report@fb786658484eddbdd59f9ad323dbd436d850b05a
         with:
           wait_variable: ${{ vars.CI_REPORT_WAIT_MINUTES }}
           wait_secret: ${{ secrets.CI_REPORT_WAIT_MINUTES }}
