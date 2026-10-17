@@ -47,7 +47,8 @@ export function renderScorecard(scorecard) {
   for (const metric of scorecard.metrics) {
     lines.push(`| ${metric.name} | ${metric.score}/10 | ${metric.deductions.map(cell).join("<br>") || "none"} |`);
   }
-  lines.push("");
+  const overall = scorecard.metrics.reduce((sum, metric) => sum + metric.score, 0) / scorecard.metrics.length;
+  lines.push("", `Overall: **${overall.toFixed(1)}/10**`, "");
   const shown = scorecard.commentLines.slice(0, 10).map((line) => `\`${line}\``);
   const more = scorecard.commentLines.length - shown.length;
   if (shown.length) lines.push(`Source comment lines: ${shown.join(", ")}${more ? `, and ${more} more` : ""}.`, "");

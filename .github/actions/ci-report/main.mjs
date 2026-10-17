@@ -9,6 +9,7 @@ import {
   resolveWaitMinutes,
 } from "./report.mjs";
 import { scoreMergeability } from "../scorecard/mergeability.mjs";
+import { scoreProductionization } from "../scorecard/production.mjs";
 
 const env = process.env;
 const repo = env.GITHUB_REPOSITORY;
@@ -72,10 +73,17 @@ async function countUnresolvedThreads(number) {
   return unresolved;
 }
 
-async function withMergeability(scorecard, checks, number) {
+const METRIC_ORDER = ["Mergeability", "Clean code", "Performance", "Productionization", "Complexity"];
+
+async function withCheckScores(scorecard, checks, number) {
   if (!scorecard?.mergeability) return scorecard;
   const mergeability = scoreMergeability({ facts: scorecard.mergeability, checks, unresolvedThreads: await countUnresolvedThreads(number) });
-  return { ...scorecard, metrics: [{ name: "Mergeability", ...mergeability }, ...scorecard.metrics] };
+  const metrics = [
+    ...scorecard.metrics,
+    { name: "Mergeability", ...mergeability },
+    { name: "Productionization", ...scoreProductionization({ facts: scorecard.production, checks }) },
+  ];
+  return { ...scorecard, metrics: METRIC_ORDER.map((name) => metrics.find((metric) => metric.name === name)).filter(Boolean) };
 }
 
 async function loadScorecard(path) {
@@ -127,7 +135,7 @@ async function main() {
     timedOut: checks.some((check) => !check.done),
     waitMinutes: minutes,
     runUrl: `${env.GITHUB_SERVER_URL}/${repo}/actions/runs/${env.GITHUB_RUN_ID}`,
-    scorecard: await withMergeability(await loadScorecard(env.INPUT_SCORECARD), checks, pr.number),
+    scorecard: await withCheckScores(await loadScorecard(env.INPUT_SCORECARD), checks, pr.number),
   });
   await appendFile(env.GITHUB_STEP_SUMMARY, `${body}\n`);
 
