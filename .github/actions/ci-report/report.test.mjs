@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { MARKER, collectChecks, nextPageUrl, pollDelayMs, renderReport, resolveWaitMinutes } from "./report.mjs";
+import { MARKER, collectChecks, nextPageUrl, pollDelayMs, renderReport, renderScorecard, resolveWaitMinutes } from "./report.mjs";
 
 test("wait minutes prefer the variable, then the secret, then 15", () => {
   assert.deepEqual(resolveWaitMinutes({ variable: "5", secret: "9" }), {
@@ -88,4 +88,26 @@ test("next page url comes from the link header", () => {
   );
   assert.equal(nextPageUrl('<https://api.github.com/x?page=1>; rel="prev"'), undefined);
   assert.equal(nextPageUrl(null), undefined);
+});
+
+const scorecard = {
+  metrics: [
+    { name: "Clean code", score: 7, deductions: ["-3 source comments 10.00% of 100 added lines, target 0.02%: delete 10 line(s)"] },
+    { name: "Complexity", score: 10, deductions: [] },
+  ],
+  commentLines: Array.from({ length: 12 }, (_, index) => `src/a.ts:${index + 1}`),
+  unparsed: ["src/b|c.ts: Unexpected token"],
+};
+
+test("scorecard renders one row per metric with its deductions", () => {
+  const lines = renderScorecard(scorecard).join("\n");
+  assert.match(lines, /\| Clean code \| 7\/10 \| -3 source comments 10\.00% .* delete 10 line\(s\) \|/);
+  assert.match(lines, /\| Complexity \| 10\/10 \| none \|/);
+  assert.match(lines, /`src\/a\.ts:10`, and 2 more\./);
+  assert.match(lines, /Not measured: src\/b\\\|c\.ts: Unexpected token\./);
+});
+
+test("a failed scorecard step shows in the report instead of disappearing", () => {
+  assert.match(renderReport({ checks: [], timedOut: false, waitMinutes: 15, runUrl: "u", scorecard: null }), /Not measured: the scorecard step failed/);
+  assert.doesNotMatch(renderReport({ checks: [], timedOut: false, waitMinutes: 15, runUrl: "u" }), /Scorecard/);
 });

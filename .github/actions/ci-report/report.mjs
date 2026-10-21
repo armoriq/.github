@@ -39,9 +39,26 @@ export function pollDelayMs(attempt) {
   return Math.min(15_000 * 2 ** attempt, 60_000);
 }
 
-export function renderReport({ checks, timedOut, waitMinutes, runUrl }) {
+const cell = (text) => text.replaceAll("|", "\\|");
+
+export function renderScorecard(scorecard) {
+  if (!scorecard) return ["### Scorecard", "", "Not measured: the scorecard step failed. See the run log.", ""];
+  const lines = ["### Scorecard", "", "| Metric | Score | Deductions |", "|---|---|---|"];
+  for (const metric of scorecard.metrics) {
+    lines.push(`| ${metric.name} | ${metric.score}/10 | ${metric.deductions.map(cell).join("<br>") || "none"} |`);
+  }
+  lines.push("");
+  const shown = scorecard.commentLines.slice(0, 10).map((line) => `\`${line}\``);
+  const more = scorecard.commentLines.length - shown.length;
+  if (shown.length) lines.push(`Source comment lines: ${shown.join(", ")}${more ? `, and ${more} more` : ""}.`, "");
+  if (scorecard.unparsed.length) lines.push(`Not measured: ${scorecard.unparsed.map(cell).join("; ")}.`, "");
+  return lines;
+}
+
+export function renderReport({ checks, timedOut, waitMinutes, runUrl, scorecard }) {
   const running = checks.filter((check) => !check.done).length;
   const lines = [MARKER, "", "### CI report", "", "Advisory. This report never blocks a merge.", ""];
+  if (scorecard !== undefined) lines.push(...renderScorecard(scorecard));
   if (timedOut) {
     lines.push(`Stopped waiting after ${waitMinutes} minutes with ${running} check(s) still running.`, "");
   }
@@ -50,7 +67,7 @@ export function renderReport({ checks, timedOut, waitMinutes, runUrl }) {
   } else {
     lines.push("| Check | Result |", "|---|---|");
     for (const check of checks) {
-      lines.push(`| ${check.name.replaceAll("|", "\\|")} | ${check.result} |`);
+      lines.push(`| ${cell(check.name)} | ${check.result} |`);
     }
   }
   lines.push("", `[Run log](${runUrl})`);

@@ -7,6 +7,7 @@ on:
 permissions:
   actions: read
   checks: read
+  contents: read
   pull-requests: write
   statuses: read
 
@@ -20,7 +21,18 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 310
     steps:
-      - uses: armoriq/.github/.github/actions/ci-report@65670bfd9d24cb5d2a48338714909facacd48a63
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Scorecard
+        continue-on-error: true
+        uses: armoriq/.github/.github/actions/scorecard@634e0c0f2a2fd9675234fccadbb91d5f45a17731
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+      - uses: armoriq/.github/.github/actions/ci-report@634e0c0f2a2fd9675234fccadbb91d5f45a17731
         with:
           wait_variable: ${{ vars.CI_REPORT_WAIT_MINUTES }}
           wait_secret: ${{ secrets.CI_REPORT_WAIT_MINUTES }}
+          scorecard: ${{ runner.temp }}/scorecard.json
