@@ -2,35 +2,35 @@
 
 Automated daily tracking of package and repository traction metrics from PyPI, npm, and GitHub.
 
-**Last updated:** 2026-10-23
+**Last updated:** 2026-10-24
 
 ## Tracked Items
 
-**Total downloads (PyPI + npm + GitHub clones):** 49,661
+**Total downloads (PyPI + npm + GitHub clones):** 50,082
 
 | Item | Source | Metric | Value |
 |------|--------|--------|-------|
-| @armoriq/armorclaw | npm | Total Downloads | 1,901 |
-| @armoriq/sdk | npm | Total Downloads | 8,086 |
-| ArmorIQ | Discord Members | Latest Value | 1,097 |
-| ArmorIQ | Discord Messages | Total Messages | 1,327 |
+| @armoriq/armorclaw | npm | Total Downloads | 1,902 |
+| @armoriq/sdk | npm | Total Downloads | 8,318 |
+| ArmorIQ | Discord Members | Latest Value | 1,100 |
+| ArmorIQ | Discord Messages | Total Messages | 1,331 |
 | armoriq-openclaw-plugin | npm | Total Downloads | 204 |
-| armoriq-sdk | PyPI | Total Downloads | 23,541 |
-| armoriq/armorClaude | GitHub Clones | Total Downloads | 8,223 |
+| armoriq-sdk | PyPI | Total Downloads | 23,607 |
+| armoriq/armorClaude | GitHub Clones | Total Downloads | 8,288 |
 | armoriq/armorClaude | GitHub Forks | Latest Value | 3 |
 | armoriq/armorClaude | GitHub Open Issues | Latest Value | 105 |
 | armoriq/armorClaude | GitHub Stars | Latest Value | 47 |
-| armoriq/armorCodex | GitHub Clones | Total Downloads | 3,682 |
+| armoriq/armorCodex | GitHub Clones | Total Downloads | 3,685 |
 | armoriq/armorCodex | GitHub Forks | Latest Value | 2 |
 | armoriq/armorCodex | GitHub Open Issues | Latest Value | 74 |
 | armoriq/armorCodex | GitHub Stars | Latest Value | 6 |
-| armoriq/armorclaw | GitHub Clones | Total Downloads | 370 |
+| armoriq/armorclaw | GitHub Clones | Total Downloads | 372 |
 | armoriq/armorclaw | GitHub Forks | Latest Value | 3 |
 | armoriq/armorclaw | GitHub Open Issues | Latest Value | 6 |
-| armoriq/armorclaw | GitHub Stars | Latest Value | 272 |
-| armoriq/armoriq-sdk-customer | GitHub Clones | Total Downloads | 3,629 |
+| armoriq/armorclaw | GitHub Stars | Latest Value | 271 |
+| armoriq/armoriq-sdk-customer | GitHub Clones | Total Downloads | 3,681 |
 | armoriq/armoriq-sdk-customer | GitHub Forks | Latest Value | 0 |
-| armoriq/armoriq-sdk-customer | GitHub Open Issues | Latest Value | 78 |
+| armoriq/armoriq-sdk-customer | GitHub Open Issues | Latest Value | 75 |
 | armoriq/armoriq-sdk-customer | GitHub Stars | Latest Value | 2 |
 | armoriq/conmap | GitHub Clones | Total Downloads | 25 |
 | armoriq/conmap | GitHub Forks | Latest Value | 0 |
