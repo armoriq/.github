@@ -87,7 +87,7 @@ export function check({ base, body }) {
   const problems = [];
   const needsReason = [];
   for (const c of changes) {
-    if (c.status === 'D' && isTestFile(c.from)) {
+    if (isTestFile(c.from) && (c.status === 'D' || !isTestFile(c.to))) {
       needsReason.push({ path: c.from, what: 'deleted' });
       continue;
     }

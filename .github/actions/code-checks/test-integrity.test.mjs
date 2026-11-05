@@ -86,6 +86,19 @@ test('removing assertions alongside a source change needs a reason in the descri
   assert.equal(res.code, 0, res.out);
 });
 
+test('renaming a test file to a non-test name counts as deleting it', () => {
+  const body = spec("it('old', () => { expect(1).toBe(1); expect(2).toBe(2); });");
+  const r = repo({ 'src/a.ts': 'export const a = 1;\n', 'old.spec.ts': body, 'keep.spec.ts': body });
+  r.commit({ 'src/a.ts': 'export const a = 2;\n', 'old.spec.ts': null, 'old.fixture.ts': body, 'keep.spec.ts': null, 'kept.spec.ts': body });
+  let res = check(r);
+  assert.equal(res.code, 1, res.out);
+  assert.match(res.out, /old\.spec\.ts \(deleted\)/);
+  assert.doesNotMatch(res.out, /keep/);
+
+  res = check(r, '## Tests removed\n- old.spec.ts: moved to a fixture because nothing ran it anymore.\n');
+  assert.equal(res.code, 0, res.out);
+});
+
 test('a change to tests alone may delete tests without a reason', () => {
   const r = repo({ 'old.spec.ts': spec("it('old', () => expect(1).toBe(1));"), 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
   r.commit({ 'old.spec.ts': null, 'a.spec.ts': spec("it('a', () => {});") });
