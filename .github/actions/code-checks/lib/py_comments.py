@@ -52,8 +52,6 @@ def docstrings(tree):
 def scan(root, rel):
     with open(f'{root}/{rel}', encoding='utf-8', errors='replace') as fh:
         src = fh.read()
-    if any(len(l) > 2000 for l in src.split('\n')):
-        return None
     lines = src.split('\n')
     try:
         toks = list(tokenize.generate_tokens(io.StringIO(src).readline))

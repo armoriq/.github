@@ -16,7 +16,6 @@ const CONFIG_FILE = '.github/comment-check.json';
 
 function scanJs(root, path) {
   const text = readFileSync(join(root, path), 'utf8');
-  if (text.split('\n').some((l) => l.length > 2000)) return null;
   const sf = parse(path, text);
   const list = comments(sf);
   const grouped = groups(list);
@@ -56,10 +55,7 @@ function scanPython(root, paths) {
 export function scanRepo(root, config, onlyPaths = null) {
   const all = trackedFiles().filter((p) => inScope(p, config.exclude));
   const results = [];
-  for (const path of all.filter((p) => !isPython(p))) {
-    const r = scanJs(root, path);
-    if (r) results.push(r);
-  }
+  for (const path of all.filter((p) => !isPython(p))) results.push(scanJs(root, path));
   results.push(...scanPython(root, all.filter(isPython)));
   const total = results.reduce((n, r) => n + r.commentLines, 0);
   const scoped = onlyPaths ? results.filter((r) => onlyPaths.has(r.path)) : results;

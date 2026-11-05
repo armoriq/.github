@@ -176,3 +176,14 @@ test('python: comments, docstrings, suppressions and commented-out code', () => 
   assert.deepEqual(rules(res.out).sort(), ['commented-out-code', 'suppression-without-reason', 'suppression-without-reason']);
   assert.equal(count(r), 3);
 });
+
+test('files with a line over 2000 characters are still checked and counted', () => {
+  const long = `export const blob = '${'x'.repeat(2500)}';`;
+  const r = repo({ 'a.ts': 'export const a = 1;\n', 'm.py': 'X = 1\n' });
+  r.commit({
+    'a.ts': `${long}\n// Fixed in #1234.\nexport const a = 1;\n`,
+    'm.py': `B = '${'x'.repeat(2500)}'\n# Fixed in #1234.\nX = 1\n`,
+  });
+  assert.deepEqual(rules(r.check('--base', 'main', '--no-ceiling').out), ['history-ref', 'history-ref']);
+  assert.equal(count(r), 2);
+});
