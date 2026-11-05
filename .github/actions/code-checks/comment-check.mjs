@@ -8,20 +8,23 @@ import { fileURLToPath } from 'node:url';
 import { parseConfig, inScope, isPython } from './lib/files.mjs';
 import { addedRanges, mergeBase, repoRoot, showAt, trackedFiles } from './lib/git.mjs';
 import { commentOnlyLines, comments, groups, looksLikeCode, parse } from './lib/js-comments.mjs';
+import { exemptDocPositions, publicSymbols } from './lib/public-api.mjs';
 import { MESSAGES, groupRules, jsSuppressionWithoutReason } from './lib/rules.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CEILING_FILE = '.github/comment-ceiling.json';
 const CONFIG_FILE = '.github/comment-check.json';
 
-function scanJs(root, path) {
+function scanJs(root, path, publicNames) {
   const text = readFileSync(join(root, path), 'utf8');
   const sf = parse(path, text);
   const list = comments(sf);
+  const exempt = publicNames ? exemptDocPositions(sf, publicNames) : new Set();
   const grouped = groups(list);
   const ownLineEnds = new Map(grouped.filter((g) => g.ownLine && !g.directive).map((g) => [g.endLine, g]));
   const violations = [];
   for (const g of grouped) {
+    g.exempt = exempt.has(g.pos);
     g.code = g.type === 'Line' && g.ownLine && !g.directive && looksLikeCode(g.rawLines);
     for (const rule of groupRules(g)) violations.push({ rule, line: g.startLine, end: g.endLine });
     for (const c of g.comments) {
@@ -34,10 +37,10 @@ function scanJs(root, path) {
   return { path, commentLines: commentOnlyLines(text, list), violations };
 }
 
-function scanPython(root, paths) {
+function scanPython(root, paths, exempt) {
   if (paths.length === 0) return [];
   const out = execFileSync('python3', ['-I', join(HERE, 'lib', 'py_comments.py')], {
-    input: JSON.stringify({ root, files: paths }),
+    input: JSON.stringify({ root, files: paths, exempt }),
     maxBuffer: 1 << 28,
   });
   return JSON.parse(out).map((f) => {
@@ -52,11 +55,26 @@ function scanPython(root, paths) {
   });
 }
 
+function publicApi(root, entries) {
+  const ts = entries.filter((e) => !isPython(e));
+  const py = entries.filter(isPython);
+  const jsNames = publicSymbols(root, ts);
+  const pyNames = py.length
+    ? JSON.parse(
+        execFileSync('python3', ['-I', join(HERE, 'lib', 'py_comments.py')], {
+          input: JSON.stringify({ mode: 'public', root, entries: py }),
+        }),
+      )
+    : {};
+  return { jsNames, pyNames };
+}
+
 export function scanRepo(root, config, onlyPaths = null) {
   const all = trackedFiles().filter((p) => inScope(p, config.exclude));
+  const { jsNames, pyNames } = publicApi(root, config.publicApi);
   const results = [];
-  for (const path of all.filter((p) => !isPython(p))) results.push(scanJs(root, path));
-  results.push(...scanPython(root, all.filter(isPython)));
+  for (const path of all.filter((p) => !isPython(p))) results.push(scanJs(root, path, jsNames.get(path)));
+  results.push(...scanPython(root, all.filter(isPython), pyNames));
   const total = results.reduce((n, r) => n + r.commentLines, 0);
   const scoped = onlyPaths ? results.filter((r) => onlyPaths.has(r.path)) : results;
   return { total, results: scoped };

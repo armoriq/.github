@@ -215,3 +215,24 @@ test('rationale wording fails while decision and plan as domain words pass', () 
   const lineOf = (c) => lines.indexOf(c) + 1;
   assert.deepEqual(flagged, rationale.map(lineOf), out);
 });
+
+test('doc comments on the public API may run past four lines', () => {
+  const long = (indent) => ['"""Line one.', 'two', 'three', 'four', 'five', '"""'].map((l, i) => (i ? indent : '') + l).join('\n');
+  const jsDoc = '/**\n * one\n * two\n * three\n * four\n * five\n */\n';
+  const r = repo({
+    '.github/comment-check.json': '{"publicApi": ["src/index.ts", "pkg/__init__.py"]}\n',
+    'src/index.ts': "export { Client } from './client';\n",
+    'src/client.ts': 'export class Client {}\n',
+    'src/internal.ts': 'export const x = 1;\n',
+    'pkg/__init__.py': 'from .client import Client\n\n__all__ = ["Client"]\n',
+    'pkg/client.py': 'class Client:\n    pass\n',
+  });
+  r.commit({
+    'src/client.ts': `${jsDoc}export class Client {\n  ${jsDoc}  run() {}\n  ${jsDoc}  private hidden() {}\n}\n`,
+    'src/internal.ts': `${jsDoc}export const x = 1;\n`,
+    'pkg/client.py': `class Client:\n    ${long('    ')}\n\n    def run(self):\n        ${long('        ')}\n\n    def _hidden(self):\n        ${long('        ')}\n`,
+  });
+  const out = r.check('--base', 'main', '--no-ceiling').out;
+  const flagged = out.split('\n').filter((l) => l.includes('block-over-4-lines')).map((l) => l.split(' ')[0]);
+  assert.deepEqual(flagged.sort(), ['pkg/client.py:18', 'src/client.ts:17', 'src/internal.ts:1']);
+});

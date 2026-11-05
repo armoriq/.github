@@ -1,6 +1,6 @@
 """Comment groups, docstrings and suppressions for Python files.
 
-stdin: JSON {"root": str, "files": [str]}
+stdin: JSON {"root": str, "files": [str], "exempt": {file: [name]}}
 stdout: JSON list, one entry per file that tokenizes.
 """
 import ast
@@ -49,7 +49,16 @@ def docstrings(tree):
     yield from walk(tree, '')
 
 
-def scan(root, rel):
+def is_exempt(owner, names):
+    if not owner:
+        return False
+    top, *rest = owner.split('.')
+    if top not in names:
+        return False
+    return all(not p.startswith('_') or p == '__init__' for p in rest)
+
+
+def scan(root, rel, exempt_names):
     with open(f'{root}/{rel}', encoding='utf-8', errors='replace') as fh:
         src = fh.read()
     lines = src.split('\n')
@@ -95,15 +104,102 @@ def scan(root, rel):
         doc_lines.update(range(stmt.lineno, stmt.end_lineno + 1))
         text = [l.strip() for l in stmt.value.value.split('\n') if l.strip()]
         groups.append({'type': 'Block', 'docstring': True, 'startLine': stmt.lineno, 'endLine': stmt.end_lineno,
-                       'directive': False, 'code': False, 'lines': text, 'text': '\n'.join(text)})
+                       'directive': False, 'code': False, 'lines': text, 'text': '\n'.join(text),
+                       'exempt': is_exempt(owner, exempt_names)})
     return {'path': rel, 'commentLines': len(own_lines | doc_lines), 'groups': groups, 'suppressions': suppressions}
+
+
+def top_level(body):
+    """Module statements, looking inside top-level try/if blocks (optional imports)."""
+    for stmt in body:
+        if isinstance(stmt, ast.Try):
+            yield from top_level(stmt.body + stmt.orelse + [s for h in stmt.handlers for s in h.body])
+        elif isinstance(stmt, ast.If):
+            yield from top_level(stmt.body + stmt.orelse)
+        else:
+            yield stmt
+
+
+def module_file(root, current, module, level):
+    """File for a `from <module> import` seen in `current`; None when outside the repo package."""
+    parts = module.split('.') if module else []
+    if level:
+        base_parts = current.split('/')[:-1]
+        if level > 1:
+            base_parts = base_parts[:-(level - 1)]
+    else:
+        base_parts = []
+    base = '/'.join(base_parts + parts)
+    for cand in (f'{base}.py', f'{base}/__init__.py'):
+        try:
+            open(f'{root}/{cand}').close()
+            return cand
+        except OSError:
+            continue
+    return None
+
+
+def parse_file(root, rel, cache={}):
+    if rel not in cache:
+        with open(f'{root}/{rel}', encoding='utf-8') as fh:
+            cache[rel] = list(top_level(ast.parse(fh.read()).body))
+    return cache[rel]
+
+
+def resolve(root, rel, name, out, seen):
+    """Record the file that defines `name` as seen from module `rel`, following re-exports."""
+    if (rel, name) in seen:
+        return
+    seen.add((rel, name))
+    stmts = parse_file(root, rel)
+    for stmt in stmts:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and stmt.name == name:
+            out.setdefault(rel, set()).add(name)
+            return
+    for stmt in stmts:
+        if isinstance(stmt, ast.ImportFrom):
+            for alias in stmt.names:
+                if (alias.asname or alias.name) == name:
+                    target = module_file(root, rel, stmt.module or '', stmt.level)
+                    if target:
+                        resolve(root, target, alias.name, out, seen)
+
+
+def public_names(root, init_rel):
+    """Map file -> names for the symbols a package __init__ exports (via __all__ when present)."""
+    stmts = parse_file(root, init_rel)
+    wanted = set()
+    has_all = False
+    for stmt in stmts:
+        targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target] if isinstance(stmt, ast.AugAssign) else []
+        if any(isinstance(t, ast.Name) and t.id == '__all__' for t in targets):
+            has_all = True
+            wanted |= {e.value for e in getattr(stmt.value, 'elts', []) if isinstance(e, ast.Constant)}
+    if not has_all:
+        for stmt in stmts:
+            if isinstance(stmt, ast.ImportFrom):
+                wanted |= {a.asname or a.name for a in stmt.names}
+            elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                wanted.add(stmt.name)
+    out, seen = {}, set()
+    for name in sorted(n for n in wanted if not n.startswith('_')):
+        resolve(root, init_rel, name, out, seen)
+    return {k: sorted(v) for k, v in out.items()}
 
 
 def main():
     req = json.load(sys.stdin)
+    if req.get('mode') == 'public':
+        merged = {}
+        for entry in req['entries']:
+            for k, v in public_names(req['root'], entry).items():
+                merged.setdefault(k, set()).update(v)
+        json.dump({k: sorted(v) for k, v in merged.items()}, sys.stdout)
+        return
+    exempt = req.get('exempt', {})
     out = []
     for rel in req['files']:
-        r = scan(req['root'], rel)
+        r = scan(req['root'], rel, set(exempt.get(rel, [])))
         if r:
             out.append(r)
     json.dump(out, sys.stdout)
