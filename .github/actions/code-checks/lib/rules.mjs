@@ -42,7 +42,7 @@ export function groupRules(g) {
   if (PLAN_LABEL.test(text)) found.push('plan-label');
   if (HISTORY.test(text)) found.push('history-phrase');
   if (g.code) found.push('commented-out-code');
-  if (g.lines.length > MAX_LINES && !LICENSE.test(g.text)) found.push('block-over-4-lines');
+  if (g.lines.length > MAX_LINES && !g.exempt && !LICENSE.test(g.text)) found.push('block-over-4-lines');
   return found;
 }
 

@@ -37,5 +37,6 @@ export function parseConfig(text) {
   const raw = text ? JSON.parse(text) : {};
   return {
     exclude: (raw.exclude ?? []).map(globToRegExp),
+    publicApi: raw.publicApi ?? [],
   };
 }

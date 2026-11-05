@@ -30,6 +30,11 @@
 - [ ] Documentation updated
 - [ ] No breaking changes (or documented)
 
+## Tests removed
+<!-- Needed when this PR deletes a test file or removes assertions and also changes source code.
+One bullet per file: the path, then why it goes. Delete this section otherwise. -->
+
+
 ## Related Issues
 <!-- Link issues: Closes #123 -->
 

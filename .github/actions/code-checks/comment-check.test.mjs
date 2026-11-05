@@ -1,44 +1,12 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { repo as makeRepo } from './repo-fixture.mjs';
 
 const CLI = join(dirname(fileURLToPath(import.meta.url)), 'comment-check.mjs');
 
-function repo(files) {
-  const dir = mkdtempSync(join(tmpdir(), 'comment-check-'));
-  const run = (...args) =>
-    execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.email=t@example.com', '-c', 'user.name=t', ...args], {
-      cwd: dir,
-      stdio: 'pipe',
-    });
-  const write = (entries) => {
-    for (const [path, text] of Object.entries(entries)) {
-      mkdirSync(dirname(join(dir, path)), { recursive: true });
-      writeFileSync(join(dir, path), text);
-    }
-  };
-  run('init', '-q', '-b', 'main');
-  write(files);
-  run('add', '-A');
-  run('commit', '-q', '-m', 'base');
-  run('checkout', '-q', '-b', 'change');
-  return {
-    dir,
-    commit(entries) {
-      write(entries);
-      run('add', '-A');
-      run('commit', '-q', '-m', 'change');
-    },
-    check(...args) {
-      const r = spawnSync('node', [CLI, ...args], { cwd: dir, encoding: 'utf8', env: { PATH: process.env.PATH } });
-      return { code: r.status, out: r.stdout + r.stderr };
-    },
-  };
-}
+const repo = (files) => makeRepo(CLI, files);
 
 const count = (r) => Number(r.check('--count').out.trim());
 const rules = (out) => out.split('\n').filter((l) => /^\S+:\d+ /.test(l)).map((l) => l.split(' ')[1].replace(/:$/, ''));
@@ -214,4 +182,44 @@ test('rationale wording fails while decision and plan as domain words pass', () 
   const flagged = out.split('\n').filter((l) => / history-phrase:/.test(l)).map((l) => Number.parseInt(l.split(':')[1], 10));
   const lineOf = (c) => lines.indexOf(c) + 1;
   assert.deepEqual(flagged, rationale.map(lineOf), out);
+});
+
+test('doc comments on the public API may run past four lines', () => {
+  const long = (indent) => ['"""Line one.', 'two', 'three', 'four', 'five', '"""'].map((l, i) => (i ? indent : '') + l).join('\n');
+  const jsDoc = '/**\n * one\n * two\n * three\n * four\n * five\n */\n';
+  const r = repo({
+    '.github/comment-check.json': '{"publicApi": ["src/index.ts", "pkg/__init__.py"]}\n',
+    'src/index.ts': "export { Client } from './client';\n",
+    'src/client.ts': 'export class Client {}\n',
+    'src/internal.ts': 'export const x = 1;\n',
+    'pkg/__init__.py': 'from .client import Client\n\n__all__ = ["Client"]\n',
+    'pkg/client.py': 'class Client:\n    pass\n',
+  });
+  r.commit({
+    'src/client.ts': `${jsDoc}export class Client {\n  ${jsDoc}  run() {}\n  ${jsDoc}  private hidden() {}\n}\n`,
+    'src/internal.ts': `${jsDoc}export const x = 1;\n`,
+    'pkg/client.py': `class Client:\n    ${long('    ')}\n\n    def run(self):\n        ${long('        ')}\n\n    def _hidden(self):\n        ${long('        ')}\n`,
+  });
+  const out = r.check('--base', 'main', '--no-ceiling').out;
+  const flagged = out.split('\n').filter((l) => l.includes('block-over-4-lines')).map((l) => l.split(' ')[0]);
+  assert.deepEqual(flagged.sort(), ['pkg/client.py:18', 'src/client.ts:17', 'src/internal.ts:1']);
+});
+
+test('only JSDoc and docstrings on the public API are exempt, not line or plain block comments', () => {
+  const lineBlock = '// one\n// two\n// three\n// four\n// five\n';
+  const plainBlock = '/*\n * one\n * two\n * three\n * four\n * five\n */\n';
+  const r = repo({
+    '.github/comment-check.json': '{"publicApi": ["src/index.ts", "pkg/__init__.py"]}\n',
+    'src/index.ts': "export { run, stop } from './api';\n",
+    'src/api.ts': 'export function run() {}\nexport function stop() {}\n',
+    'pkg/__init__.py': 'from .api import run\n\n__all__ = ["run"]\n',
+    'pkg/api.py': 'def run():\n    pass\n',
+  });
+  r.commit({
+    'src/api.ts': `${lineBlock}export function run() {}\n${plainBlock}export function stop() {}\n`,
+    'pkg/api.py': '# one\n# two\n# three\n# four\n# five\ndef run():\n    pass\n',
+  });
+  const out = r.check('--base', 'main', '--no-ceiling').out;
+  const flagged = out.split('\n').filter((l) => l.includes('block-over-4-lines')).map((l) => l.split(' ')[0]);
+  assert.deepEqual(flagged.sort(), ['pkg/api.py:1', 'src/api.ts:1', 'src/api.ts:7'], out);
 });

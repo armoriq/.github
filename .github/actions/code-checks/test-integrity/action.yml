@@ -1,0 +1,21 @@
+name: Test integrity
+description: Fails when a pull request adds a skip without a quarantine issue, adds a focus marker, or removes tests while changing source code without saying why.
+inputs:
+  base:
+    description: Revision to compare against. The merge base of this and HEAD is used.
+    required: true
+  body-file:
+    description: File holding the pull request description.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install the checker
+      shell: bash
+      run: npm ci --prefix "${GITHUB_ACTION_PATH}/.." --ignore-scripts --no-audit --no-fund --loglevel=error
+    - name: Check tests
+      shell: bash
+      env:
+        BASE: ${{ inputs.base }}
+        BODY_FILE: ${{ inputs.body-file }}
+      run: node "${GITHUB_ACTION_PATH}/../test-integrity.mjs" --base "${BASE}" --body-file "${BODY_FILE}"
