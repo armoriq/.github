@@ -1,0 +1,26 @@
+name: CI report
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  actions: read
+  checks: read
+  pull-requests: write
+  statuses: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ci-report:
+    name: CI report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 310
+    steps:
+      - uses: armoriq/.github/.github/actions/ci-report@65670bfd9d24cb5d2a48338714909facacd48a63
+        with:
+          wait_variable: ${{ vars.CI_REPORT_WAIT_MINUTES }}
+          wait_secret: ${{ secrets.CI_REPORT_WAIT_MINUTES }}
