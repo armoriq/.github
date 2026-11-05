@@ -1,0 +1,52 @@
+name: Reusable mutation report
+on:
+  workflow_call:
+    inputs:
+      scope:
+        description: Git pathspecs to mutate, one per line. Prefix an exclusion with ':!'.
+        type: string
+        required: true
+      setup:
+        description: Shell commands to run after npm ci and before Stryker.
+        type: string
+        default: ''
+      node-version:
+        type: string
+        default: '22'
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: ranges
+        uses: armoriq/.github/.github/actions/mutation-report/ranges@main
+        with:
+          base: HEAD^1
+          scope: ${{ inputs.scope }}
+      - if: steps.ranges.outputs.mutate != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+      - if: steps.ranges.outputs.mutate != ''
+        run: npm ci
+      - if: steps.ranges.outputs.mutate != '' && inputs.setup != ''
+        env:
+          SETUP: ${{ inputs.setup }}
+        run: bash -euo pipefail -c "$SETUP"
+      - id: stryker
+        if: steps.ranges.outputs.mutate != ''
+        continue-on-error: true
+        env:
+          MUTATE: ${{ steps.ranges.outputs.mutate }}
+          DATABASE_URL: postgresql://none:none@127.0.0.1:1/none
+        run: npx stryker run --mutate "$MUTATE"
+      - if: always() && steps.ranges.outputs.mutate != ''
+        uses: armoriq/.github/.github/actions/mutation-report/comment@main
