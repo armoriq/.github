@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { MARKER, render } from './comment.mjs';
 import { parseRanges } from './ranges.mjs';
@@ -51,4 +52,11 @@ test('render lists at most 20 survivors', () => {
 
 test('render says so when Stryker wrote no report', () => {
   assert.match(render(null), /did not produce a report/);
+});
+
+test('the reusable workflow checks out PR code without persisting the write-scoped token', () => {
+  const wf = readFileSync(new URL('../../workflows/reusable-mutation-report.yml', import.meta.url), 'utf8');
+  const checkouts = wf.split(/\n\s*- /).filter((step) => /uses: actions\/checkout@/.test(step));
+  assert.ok(checkouts.length > 0);
+  for (const step of checkouts) assert.match(step, /persist-credentials: false/);
 });
