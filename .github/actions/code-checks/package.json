@@ -1,0 +1,9 @@
+{
+  "name": "armoriq-code-checks",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "typescript": "5.9.3"
+  }
+}

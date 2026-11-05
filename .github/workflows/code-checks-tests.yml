@@ -1,0 +1,22 @@
+name: Code checks tests
+
+on:
+  pull_request:
+    paths:
+      - ".github/actions/code-checks/**"
+      - ".github/workflows/code-checks-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Code checks tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --prefix .github/actions/code-checks --ignore-scripts --no-audit --no-fund
+      - run: node --test ".github/actions/code-checks/*.test.mjs"
