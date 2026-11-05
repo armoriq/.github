@@ -1,44 +1,12 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { repo as makeRepo } from './repo-fixture.mjs';
 
 const CLI = join(dirname(fileURLToPath(import.meta.url)), 'comment-check.mjs');
 
-function repo(files) {
-  const dir = mkdtempSync(join(tmpdir(), 'comment-check-'));
-  const run = (...args) =>
-    execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.email=t@example.com', '-c', 'user.name=t', ...args], {
-      cwd: dir,
-      stdio: 'pipe',
-    });
-  const write = (entries) => {
-    for (const [path, text] of Object.entries(entries)) {
-      mkdirSync(dirname(join(dir, path)), { recursive: true });
-      writeFileSync(join(dir, path), text);
-    }
-  };
-  run('init', '-q', '-b', 'main');
-  write(files);
-  run('add', '-A');
-  run('commit', '-q', '-m', 'base');
-  run('checkout', '-q', '-b', 'change');
-  return {
-    dir,
-    commit(entries) {
-      write(entries);
-      run('add', '-A');
-      run('commit', '-q', '-m', 'change');
-    },
-    check(...args) {
-      const r = spawnSync('node', [CLI, ...args], { cwd: dir, encoding: 'utf8', env: { PATH: process.env.PATH } });
-      return { code: r.status, out: r.stdout + r.stderr };
-    },
-  };
-}
+const repo = (files) => makeRepo(CLI, files);
 
 const count = (r) => Number(r.check('--count').out.trim());
 const rules = (out) => out.split('\n').filter((l) => /^\S+:\d+ /.test(l)).map((l) => l.split(' ')[1].replace(/:$/, ''));

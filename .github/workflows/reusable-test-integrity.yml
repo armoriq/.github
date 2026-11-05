@@ -1,0 +1,26 @@
+name: Reusable test integrity
+on:
+  workflow_call: {}
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Read the pull request description
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api "repos/${REPO}/pulls/${PR}" --jq '.body // ""' > "${RUNNER_TEMP}/pr-body.md"
+      - uses: armoriq/.github/.github/actions/code-checks/test-integrity@main
+        with:
+          base: HEAD^1
+          body-file: ${{ runner.temp }}/pr-body.md
