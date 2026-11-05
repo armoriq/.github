@@ -1,0 +1,17 @@
+name: Comment check
+description: Fails on low-value comments on the lines a pull request adds, and holds the repo's comment-line total at its ceiling.
+inputs:
+  base:
+    description: Revision to compare against. The merge base of this and HEAD is used.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install the checker
+      shell: bash
+      run: npm ci --prefix "${GITHUB_ACTION_PATH}/.." --ignore-scripts --no-audit --no-fund --loglevel=error
+    - name: Check comments
+      shell: bash
+      env:
+        BASE: ${{ inputs.base }}
+      run: node "${GITHUB_ACTION_PATH}/../comment-check.mjs" --base "${BASE}"
