@@ -1,0 +1,27 @@
+name: Mutation ranges
+description: Lists the lines a PR adds inside a scope as Stryker mutate patterns.
+inputs:
+  base:
+    description: Revision to diff against.
+    required: true
+  scope:
+    description: Git pathspecs, one per line. Prefix an exclusion with ':!'.
+    required: true
+outputs:
+  mutate:
+    description: Comma-separated file:start-end patterns, empty when the PR adds no lines in scope.
+    value: ${{ steps.ranges.outputs.mutate }}
+runs:
+  using: composite
+  steps:
+    - id: ranges
+      shell: bash
+      env:
+        BASE: ${{ inputs.base }}
+        SCOPE: ${{ inputs.scope }}
+      run: |
+        set -euo pipefail
+        mapfile -t specs < <(printf '%s\n' "$SCOPE" | sed '/^[[:space:]]*$/d')
+        mutate="$(node "$GITHUB_ACTION_PATH/../ranges.mjs" --base "$BASE" -- "${specs[@]}")"
+        echo "mutate=$mutate" >> "$GITHUB_OUTPUT"
+        echo "Ranges to mutate: ${mutate:-none}"
