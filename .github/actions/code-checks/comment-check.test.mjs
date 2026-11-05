@@ -124,7 +124,7 @@ test('only lines the change adds are checked', () => {
   assert.equal(res.code, 0, res.out);
 });
 
-test('the ceiling fails on growth, asks to be lowered on shrinkage, and never rises', () => {
+test('the ceiling fails on growth, passes with a notice on shrinkage, and never rises', () => {
   const r = repo({ 'a.ts': '// keeps the cache warm\nexport const a = 1;\n', '.github/comment-ceiling.json': '{"commentLines": 1}\n' });
   r.commit({ 'a.ts': '// keeps the cache warm\n// and the retry bounded\nexport const a = 1;\n' });
   let res = r.check('--base', 'HEAD^');
@@ -133,7 +133,8 @@ test('the ceiling fails on growth, asks to be lowered on shrinkage, and never ri
 
   r.commit({ 'a.ts': 'export const a = 1;\n' });
   res = r.check('--base', 'HEAD^');
-  assert.match(res.out, /Lower commentLines in \.github\/comment-ceiling\.json to 0/);
+  assert.equal(res.code, 0, res.out);
+  assert.match(res.out, /can go down to 0/);
 
   r.commit({ '.github/comment-ceiling.json': '{"commentLines": 0}\n' });
   assert.equal(r.check('--base', 'HEAD^').code, 0);

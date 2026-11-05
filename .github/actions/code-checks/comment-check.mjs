@@ -101,6 +101,7 @@ function main(argv) {
   }
 
   const ceilingProblems = [];
+  const ceilingNotices = [];
   if (mb && !argv.includes('--no-ceiling')) {
     const ceiling = readCeiling(showAt('HEAD', CEILING_FILE));
     const baseCeiling = readCeiling(showAt(mb, CEILING_FILE));
@@ -113,7 +114,7 @@ function main(argv) {
       if (total > ceiling) {
         ceilingProblems.push(`This change has ${total} comment lines, ${total - ceiling} over the ceiling of ${ceiling}. Remove ${total - ceiling} comment lines.`);
       } else if (total < ceiling) {
-        ceilingProblems.push(`This change has ${total} comment lines, under the ceiling of ${ceiling}. Lower commentLines in ${CEILING_FILE} to ${total} in this change.`);
+        ceilingNotices.push(`This change has ${total} comment lines, under the ceiling of ${ceiling}. The ceiling can go down to ${total} in ${CEILING_FILE}.`);
       }
     }
   }
@@ -126,6 +127,10 @@ function main(argv) {
     console.log(`ceiling: ${c}`);
     if (process.env.GITHUB_ACTIONS) console.log(`::error title=comment ceiling::${c}`);
   }
+  for (const c of ceilingNotices) {
+    console.log(`ceiling: ${c}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::notice title=comment ceiling::${c}`);
+  }
 
   if (process.env.GITHUB_STEP_SUMMARY) {
     const byRule = {};
@@ -137,7 +142,7 @@ function main(argv) {
         `### Comment check ${problems.length + ceilingProblems.length ? ':x:' : ':white_check_mark:'}`,
         '',
         `Comment lines in the repo: **${total}**.`,
-        ...ceilingProblems.map((c) => `- ${c}`),
+        ...[...ceilingProblems, ...ceilingNotices].map((c) => `- ${c}`),
         '',
         rows.length ? ['| rule | comments |', '|---|---:|', ...rows].join('\n') : 'No comment problems on the lines this change adds.',
         '',
