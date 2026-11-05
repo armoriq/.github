@@ -3,7 +3,7 @@ export const MAX_LINES = 4;
 const DIVIDER = /^[\s\-=*#~_/\\─━═+|<>]{4,}$|[-=─━═]{5,}/u;
 const PLAN_LABEL = /(?<![\w#.-])(D\d{2,3}|C\d[a-z]?|P\d|H\d|T\d{1,2}|O\d)(?![\w-])/u;
 const HISTORY =
-  /\b(?:phase\s*[0-9]+[a-z]?|per (?:the )?prd|we (?:decided|chose|picked|agreed)|used to be|temporar(?:y|ily)|for now)\b|(?:^|[.;]\s+)previously\b|\bpreviously(?=,)/imu;
+  /\b(?:phase\s*[0-9]+[a-z]?|per (?:the )?(?:prd|plan)|we (?:decided|chose|picked|agreed)|used to be|temporar(?:y|ily)|for now|design decision|(?:our|the) decision (?:was|is) to|(?:we|i) made the decision|the plan (?:says|is|was) to|judge?ment call|first cut)\b|\bdeviat|\bprd\s*§|(?:^|[.;]\s+)previously\b|\bpreviously(?=,)/imu;
 const BARE_REF = /(?<![\w/&#.-])#[1-9]\d{1,4}(?![\w-])/u;
 const URL_REF = /github\.com\/[\w.-]+\/[\w.-]+\/(issues|pull)\/\d+/u;
 const TASK = /\b(TODO|FIXME|HACK)\b|\bXXX:/u;
@@ -17,7 +17,7 @@ export const MESSAGES = {
   'plan-label':
     'Drop the plan or decision label (D85, C1, T8); say the reason in plain words or put it in the PR body.',
   'history-phrase':
-    'Drop the history ("previously", "used to be", "for now", "phase N", "per PRD"); say what the code does now.',
+    'Drop the history or rationale ("previously", "for now", "phase N", "per PRD", "design decision", "first cut"); say what the code does now.',
   'commented-out-code': 'Delete the commented-out code; git keeps it.',
   'block-over-4-lines': `Cut this comment to ${MAX_LINES} lines or fewer: keep the constraint, drop the background.`,
   'suppression-without-reason':

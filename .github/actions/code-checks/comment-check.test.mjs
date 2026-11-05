@@ -188,3 +188,30 @@ test('files with a line over 2000 characters are still checked and counted', () 
   assert.deepEqual(rules(r.check('--base', 'main', '--no-ceiling').out), ['history-ref', 'history-ref']);
   assert.equal(count(r), 2);
 });
+
+test('rationale wording fails while decision and plan as domain words pass', () => {
+  const r = repo({ 'a.ts': 'export const a = 1;\n' });
+  const domain = [
+    '// Records the decision to the OPA decision log.',
+    '// Resolve orgId from the plan or the membership.',
+    '// Try an action that is not in the plan.',
+    '// Shows who made the decision and why.',
+  ];
+  const rationale = [
+    '// This was a design decision for the first release.',
+    '// The decision was to keep the cache local.',
+    '// Matches the payload per the plan.',
+    '// The plan says to retry once.',
+    '// We deviate from the spec here.',
+    '// A judgement call on the timeout.',
+    '// First cut of the parser.',
+    '// See PRD §8.4.',
+  ];
+  const lines = ['export const a = 1;'];
+  for (const c of [...domain, ...rationale]) lines.push(c, 'console.log(a);');
+  r.commit({ 'a.ts': `${lines.join('\n')}\n` });
+  const out = r.check('--base', 'main', '--no-ceiling').out;
+  const flagged = out.split('\n').filter((l) => / history-phrase:/.test(l)).map((l) => Number.parseInt(l.split(':')[1], 10));
+  const lineOf = (c) => lines.indexOf(c) + 1;
+  assert.deepEqual(flagged, rationale.map(lineOf), out);
+});
