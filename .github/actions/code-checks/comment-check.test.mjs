@@ -236,3 +236,22 @@ test('doc comments on the public API may run past four lines', () => {
   const flagged = out.split('\n').filter((l) => l.includes('block-over-4-lines')).map((l) => l.split(' ')[0]);
   assert.deepEqual(flagged.sort(), ['pkg/client.py:18', 'src/client.ts:17', 'src/internal.ts:1']);
 });
+
+test('only JSDoc and docstrings on the public API are exempt, not line or plain block comments', () => {
+  const lineBlock = '// one\n// two\n// three\n// four\n// five\n';
+  const plainBlock = '/*\n * one\n * two\n * three\n * four\n * five\n */\n';
+  const r = repo({
+    '.github/comment-check.json': '{"publicApi": ["src/index.ts", "pkg/__init__.py"]}\n',
+    'src/index.ts': "export { run, stop } from './api';\n",
+    'src/api.ts': 'export function run() {}\nexport function stop() {}\n',
+    'pkg/__init__.py': 'from .api import run\n\n__all__ = ["run"]\n',
+    'pkg/api.py': 'def run():\n    pass\n',
+  });
+  r.commit({
+    'src/api.ts': `${lineBlock}export function run() {}\n${plainBlock}export function stop() {}\n`,
+    'pkg/api.py': '# one\n# two\n# three\n# four\n# five\ndef run():\n    pass\n',
+  });
+  const out = r.check('--base', 'main', '--no-ceiling').out;
+  const flagged = out.split('\n').filter((l) => l.includes('block-over-4-lines')).map((l) => l.split(' ')[0]);
+  assert.deepEqual(flagged.sort(), ['pkg/api.py:1', 'src/api.ts:1', 'src/api.ts:7'], out);
+});

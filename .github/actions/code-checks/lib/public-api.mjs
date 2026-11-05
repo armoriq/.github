@@ -99,11 +99,14 @@ const isPrivateMember = (m) =>
     (mod) => mod.kind === ts.SyntaxKind.PrivateKeyword || mod.kind === ts.SyntaxKind.ProtectedKeyword,
   );
 
-// Start offsets of the doc comments on exported declarations and their public members.
+const isJsDoc = (text, r) =>
+  r.kind === ts.SyntaxKind.MultiLineCommentTrivia && text.startsWith('/**', r.pos) && r.end - r.pos > 4;
+
+// Start offsets of the JSDoc comments on exported declarations and their public members.
 export function exemptDocPositions(sf, names) {
   const out = new Set();
   const take = (node) => {
-    for (const r of ts.getLeadingCommentRanges(sf.text, node.pos) ?? []) out.add(r.pos);
+    for (const r of ts.getLeadingCommentRanges(sf.text, node.pos) ?? []) if (isJsDoc(sf.text, r)) out.add(r.pos);
   };
   for (const stmt of sf.statements) {
     if (!declaredNames(stmt).some((n) => names.has(n))) continue;
