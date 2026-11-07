@@ -2,21 +2,21 @@
 
 Automated daily tracking of package and repository traction metrics from PyPI, npm, and GitHub.
 
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 ## Tracked Items
 
-**Total downloads (PyPI + npm + GitHub clones):** 52,681
+**Total downloads (PyPI + npm + GitHub clones):** 53,316
 
 | Item | Source | Metric | Value |
 |------|--------|--------|-------|
-| @armoriq/armorclaw | npm | Total Downloads | 1,967 |
-| @armoriq/sdk | npm | Total Downloads | 8,872 |
-| ArmorIQ | Discord Members | Latest Value | 1,114 |
+| @armoriq/armorclaw | npm | Total Downloads | 1,972 |
+| @armoriq/sdk | npm | Total Downloads | 8,903 |
+| ArmorIQ | Discord Members | Latest Value | 1,113 |
 | ArmorIQ | Discord Messages | Total Messages | 1,372 |
 | armoriq-openclaw-plugin | npm | Total Downloads | 204 |
-| armoriq-sdk | PyPI | Total Downloads | 24,470 |
-| armoriq/armorClaude | GitHub Clones | Total Downloads | 8,748 |
+| armoriq-sdk | PyPI | Total Downloads | 24,545 |
+| armoriq/armorClaude | GitHub Clones | Total Downloads | 8,869 |
 | armoriq/armorClaude | GitHub Forks | Latest Value | 3 |
 | armoriq/armorClaude | GitHub Open Issues | Latest Value | 116 |
 | armoriq/armorClaude | GitHub Stars | Latest Value | 47 |
@@ -24,11 +24,11 @@ Automated daily tracking of package and repository traction metrics from PyPI, n
 | armoriq/armorCodex | GitHub Forks | Latest Value | 2 |
 | armoriq/armorCodex | GitHub Open Issues | Latest Value | 82 |
 | armoriq/armorCodex | GitHub Stars | Latest Value | 7 |
-| armoriq/armorclaw | GitHub Clones | Total Downloads | 450 |
+| armoriq/armorclaw | GitHub Clones | Total Downloads | 451 |
 | armoriq/armorclaw | GitHub Forks | Latest Value | 3 |
 | armoriq/armorclaw | GitHub Open Issues | Latest Value | 6 |
 | armoriq/armorclaw | GitHub Stars | Latest Value | 269 |
-| armoriq/armoriq-sdk-customer | GitHub Clones | Total Downloads | 3,923 |
+| armoriq/armoriq-sdk-customer | GitHub Clones | Total Downloads | 4,325 |
 | armoriq/armoriq-sdk-customer | GitHub Forks | Latest Value | 0 |
 | armoriq/armoriq-sdk-customer | GitHub Open Issues | Latest Value | 101 |
 | armoriq/armoriq-sdk-customer | GitHub Stars | Latest Value | 2 |
