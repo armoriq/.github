@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="group" time="0.001649" disabled="0" errors="0" tests="3" failures="1" skipped="1" timestamp="2026-11-07T06:43:24.216Z" hostname="runner">
+		<testcase name="passes" time="0.000220" classname="group" file="/home/runner/work/repo/repo/a.test.mjs"/>
+		<testcase name="fails" time="0.000548" classname="group" file="/home/runner/work/repo/repo/a.test.mjs" failure="1 == 2">
+			<failure type="testCodeFailure" message="1 == 2">
+Error [ERR_TEST_FAILURE]: 1 == 2
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: 1 == 2
+      at TestContext.&lt;anonymous> (file:///home/runner/work/repo/repo/a.test.mjs:2:76)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: '==',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="skipped" time="0.000037" classname="group" file="/home/runner/work/repo/repo/a.test.mjs">
+			<skipped type="skipped" message="true"/>
+		</testcase>
+	</testsuite>
+	<testcase name="top level" time="0.000038" classname="test" file="/home/runner/work/repo/repo/a.test.mjs"/>
+	<!-- tests 4 -->
+	<!-- suites 1 -->
+	<!-- pass 2 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 1 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 86.77275 -->
+</testsuites>
