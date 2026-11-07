@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="4" time="0.011" timestamp="2026-11-07T12:13:48.638948+05:30" hostname="runner"><testcase classname="test_s.TestThing" name="test_ok" time="0.000" /><testcase classname="test_s.TestThing" name="test_bad" time="0.000"><failure message="assert 1 == 2">self = &lt;test_s.TestThing object at 0x106c54110&gt;
+
+&gt;   def test_bad(self): assert 1 == 2
+                        ^^^^^^^^^^^^^
+E   assert 1 == 2
+
+test_s.py:4: AssertionError</failure></testcase><testcase classname="test_s.TestThing" name="test_skip" time="0.000"><skipped type="pytest.skip" message="x">/home/runner/work/repo/repo/test_s.py:5: x</skipped></testcase><testcase classname="test_s" name="test_top" time="0.000" /></testsuite></testsuites>

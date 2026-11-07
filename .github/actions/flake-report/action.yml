@@ -1,0 +1,40 @@
+name: Flake report
+description: Reads the result files of several attempts at the same test suite, reports each test's pass rate, and opens one issue per newly flaky test.
+inputs:
+  results:
+    description: >-
+      Directory holding every attempt's result files (jest or vitest JSON, JUnit XML), searched recursively.
+      Download each attempt's artifact into its own subdirectory named flake-<attempt>-<leg>, where leg names
+      the matrix leg (node20, py3.12) and anything after ~ (a shard) is ignored.
+    required: true
+  attempts:
+    description: How many attempts ran. Used in the summary only.
+    required: true
+  ref:
+    description: Branch the attempts tested.
+    required: false
+    default: dev
+  sha:
+    description: Commit the attempts tested.
+    required: false
+    default: ''
+  open-issues:
+    description: Set to false to only write the summary.
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+    - name: Report flaky tests
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        FLAKE_REF: ${{ inputs.ref }}
+        FLAKE_SHA: ${{ inputs.sha }}
+        FLAKE_OPEN_ISSUES: ${{ inputs.open-issues }}
+        RESULTS: ${{ inputs.results }}
+        ATTEMPTS: ${{ inputs.attempts }}
+      run: node "${GITHUB_ACTION_PATH}/main.mjs" "${RESULTS}" "${ATTEMPTS}"

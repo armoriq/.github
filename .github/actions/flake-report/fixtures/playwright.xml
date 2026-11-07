@@ -1,0 +1,30 @@
+<testsuites id="" name="" tests="2" failures="1" skipped="0" errors="0" time="0.229187">
+<testsuite name="x.spec.ts" timestamp="2026-11-07T06:43:43.627Z" hostname="" tests="2" failures="1" skipped="0" time="0.002" errors="0">
+<testcase name="area › ok" classname="x.spec.ts" time="0.001">
+</testcase>
+<testcase name="area › bad" classname="x.spec.ts" time="0.001">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../test-results/x-area-bad/error-context.md]]
+]]>
+</system-out>
+<failure message="expect(received).toBe(expected) // Object.is equality" type="expect.toBe">
+<![CDATA[  x.spec.ts:2:79 › area › bad ──────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 2
+    Received: 1
+
+      1 | import { test, expect } from '@playwright/test';
+    > 2 | test.describe('area', () => { test('ok', async () => { expect(1).toBe(1); }); test('bad', async () => { expect(1).toBe(2); }); });
+        |                                                                                                                   ^
+      3 |
+        at /home/runner/work/repo/repo/x.spec.ts:2:115
+
+    Error Context: ../test-results/x-area-bad/error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>
