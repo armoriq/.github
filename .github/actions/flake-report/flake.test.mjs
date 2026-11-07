@@ -44,6 +44,16 @@ describe('parsers read real runner output', () => {
     assert.match(r[1].message, /TestContext.<anonymous>/);
   });
 
+  it('node:test junit with a raw > inside attribute values (real armorClaude output)', () => {
+    const text = fixture('node20-raw-gt.xml');
+    const r = parseJUnit(text);
+    assert.equal(r.length, text.match(/<testcase\b/g).length);
+    assert.deepEqual(r.map((t) => t.status), ['passed', 'passed', 'passed', 'passed', 'passed', 'failed']);
+    assert.equal(r[1].name, 'every backend call from a armorclaude-dev-armoriq install names armorclaude-dev/<plugin version>');
+    assert.equal(r[5].name, 'the live upload keeps its state and log owner-only');
+    assert.match(r[5].message, /ENOTEMPTY: directory not empty/);
+  });
+
   it('playwright junit with a CDATA failure', () => {
     const r = parseJUnit(fixture('playwright.xml'));
     assert.deepEqual(brief(r), ['x.spec.ts | area › ok | passed', 'x.spec.ts | area › bad | failed']);

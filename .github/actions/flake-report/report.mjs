@@ -35,15 +35,45 @@ export function parseJestJson(text) {
 
 const cdata = (s) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
 
+// Reads one start tag at `at`. Quote-aware: node:test leaves `>` unescaped inside attribute values.
+function readTag(text, at, name) {
+  let i = at + name.length + 1;
+  let quote = '';
+  for (; i < text.length; i++) {
+    const c = text[i];
+    if (quote) {
+      if (c === quote) quote = '';
+    } else if (c === '"' || c === "'") quote = c;
+    else if (c === '>') break;
+  }
+  const raw = text.slice(at + name.length + 1, i);
+  return { attrs: attrs(raw), selfClosing: raw.trimEnd().endsWith('/'), end: i + 1 };
+}
+
+function* elements(text, name) {
+  const open = new RegExp(`<${name}(?=[\\s/>])`, 'g');
+  let m;
+  while ((m = open.exec(text))) {
+    const tag = readTag(text, m.index, name);
+    if (tag.selfClosing) {
+      open.lastIndex = tag.end;
+      yield { attrs: tag.attrs, body: '' };
+      continue;
+    }
+    const close = text.indexOf(`</${name}>`, tag.end);
+    const stop = close === -1 ? text.length : close;
+    open.lastIndex = stop;
+    yield { attrs: tag.attrs, body: text.slice(tag.end, stop) };
+  }
+}
+
 export function parseJUnit(text) {
   const out = [];
-  for (const tc of text.matchAll(/<testcase\b([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/g)) {
-    const a = attrs(tc[1]);
-    const body = tc[2] ?? '';
-    const failure = body.match(/<(failure|error)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1>)/);
-    const status = failure ? 'failed' : /<skipped\b/.test(body) ? 'skipped' : 'passed';
-    const detail = failure?.[3] ? decode(cdata(failure[3])).trim() : '';
-    const message = failure ? detail || attrs(failure[2]).message || '' : '';
+  for (const { attrs: a, body } of elements(text, 'testcase')) {
+    const failure = elements(body, 'failure').next().value ?? elements(body, 'error').next().value;
+    const status = failure ? 'failed' : /<skipped(?=[\s/>])/.test(body) ? 'skipped' : 'passed';
+    const detail = failure?.body ? decode(cdata(failure.body)).trim() : '';
+    const message = failure ? detail || failure.attrs.message || '' : '';
     const group = a.classname && a.classname !== a.file && a.classname !== 'test' ? a.classname : '';
     const file = a.file || group;
     const name = a.file && group ? `${group} › ${a.name ?? ''}` : (a.name ?? '');
