@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="the usage worker finds sessions kept under CLAUDE_CONFIG_DIR" time="0.208917" classname="test"/>
+	<testcase name="every backend call from a armorclaude-dev-armoriq install names armorclaude-dev/&lt;plugin version>" time="0.494939" classname="test"/>
+	<testcase name="every backend call from a armorclaude-armoriq install names armorclaude/&lt;plugin version>" time="0.502574" classname="test"/>
+	<testcase name="every backend call from a armorclaude install names armorclaude/&lt;plugin version>" time="0.624386" classname="test"/>
+	<testcase name="the usage upload names armorclaude/&lt;plugin version> on every call" time="0.682328" classname="test"/>
+	<testcase name="the live upload keeps its state and log owner-only" time="0.960482" classname="test" failure="ENOTEMPTY: directory not empty, rmdir '/tmp/live-usage-1fd1b995-2718-4ef0-a665-bc62137b7596/data/usage-live/1a860327ffb6a810f2f0e5c14cbb3d5c'">
+		<failure type="testCodeFailure" message="ENOTEMPTY: directory not empty, rmdir '/tmp/live-usage-1fd1b995-2718-4ef0-a665-bc62137b7596/data/usage-live/1a860327ffb6a810f2f0e5c14cbb3d5c'">
+[Error [ERR_TEST_FAILURE]: ENOTEMPTY: directory not empty, rmdir '/tmp/live-usage-1fd1b995-2718-4ef0-a665-bc62137b7596/data/usage-live/1a860327ffb6a810f2f0e5c14cbb3d5c'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOTEMPTY: directory not empty, rmdir '/tmp/live-usage-1fd1b995-2718-4ef0-a665-bc62137b7596/data/usage-live/1a860327ffb6a810f2f0e5c14cbb3d5c'
+      at Object.rmdirSync (node:fs:1215:11)
+      at _rmdirSync (node:internal/fs/rimraf:262:21)
+      at rimrafSync (node:internal/fs/rimraf:195:7)
+      at node:internal/fs/rimraf:255:9
+      at Array.forEach (&lt;anonymous>)
+      at _rmdirSync (node:internal/fs/rimraf:252:7)
+      at rimrafSync (node:internal/fs/rimraf:195:7)
+...
+}
+		</failure>
+	</testcase>
+</testsuites>
