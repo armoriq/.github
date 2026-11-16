@@ -93,6 +93,47 @@ jobs:
             exit 0
           fi
 
+          # --- Sync-branch exemption --------------------------------------------
+          # A back-merge cannot use main itself as the head when the base requires
+          # an up-to-date head, so it is often opened from a branch that has main
+          # and the base merged into it. Recognise it by content, not by name: the
+          # head contains every commit of main, and every commit it carries that is
+          # on neither main nor the base is a merge commit. Such a PR brings in
+          # nothing beyond main. Same-repo PRs only.
+          if [ "$HEAD_REPO" = "$REPO" ] && \
+             echo "$BASE" | grep -qEi '^(dev|develop|development|staging|stage|next|qa|uat)$'; then
+            MAIN=""
+            for b in main master; do
+              if gh api "repos/$REPO/branches/$b" --silent 2>/dev/null; then MAIN=$b; break; fi
+            done
+            HEAD_SHA=$(gh api "repos/$REPO/pulls/$PR" --jq '.head.sha')
+            sync=0
+            if [ -n "$MAIN" ]; then
+              read -r behind ahead < <(gh api "repos/$REPO/compare/$MAIN...$HEAD_SHA" --jq '[.behind_by, .ahead_by] | @tsv')
+              # The compare API lists at most 250 commits; beyond that, do not guess.
+              if [ "$behind" = 0 ] && [ "$ahead" -le 250 ]; then
+                sync=1
+                while IFS=$'\t' read -r sha parents; do
+                  [ "$parents" -ge 2 ] && continue
+                  if [ "$(gh api "repos/$REPO/compare/$sha...$BASE" --jq '.behind_by')" != 0 ]; then
+                    echo "Not a sync PR: $sha is on neither $MAIN nor $BASE and is not a merge commit."
+                    sync=0
+                    break
+                  fi
+                done < <(gh api "repos/$REPO/compare/$MAIN...$HEAD_SHA" --jq '.commits[] | [.sha, (.parents | length)] | @tsv')
+              fi
+            fi
+            if [ "$sync" = 1 ]; then
+              echo "::notice::Sync PR ($HEAD -> $BASE) contains $MAIN and adds nothing new, size check skipped."
+              {
+                echo "### PR size check :white_check_mark:"
+                echo ""
+                echo "Sync PR (\`$HEAD\` -> \`$BASE\`): contains all of \`$MAIN\` and carries no commit beyond \`$MAIN\`, \`$BASE\` and merges. Exempt from the size cap."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          fi
+
           # --- Collect changed files ------------------------------------------
           # The files API returns at most 3000 entries, however many the PR
           # really touches:
