@@ -96,9 +96,22 @@ function firstExpectArg(node) {
   return n ? n.arguments[0] : null;
 }
 
-const CONSTRUCTED_BY = new Set(['get', 'resolve', 'create', 'compile', 'createNestApplication']);
+const CONTAINER = /^(app|module|moduleRef|moduleFixture|testingModule|ref)$/u;
+// `new X()`, or a DI lookup such as `moduleRef.get(X)`.
 const constructs = (node) =>
-  !!node && (ts.isNewExpression(node) || (ts.isCallExpression(node) && CONSTRUCTED_BY.has(propName(node.expression))));
+  !!node &&
+  (ts.isNewExpression(node) ||
+    (ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ['get', 'resolve'].includes(node.expression.name.text) &&
+      ts.isIdentifier(node.expression.expression) &&
+      CONTAINER.test(node.expression.expression.text)));
+
+const literalPath = (node) =>
+  !!node &&
+  (ts.isStringLiteralLike(node) ||
+    (ts.isIdentifier(node) && (node.text === '__dirname' || /^[A-Z][A-Z0-9_]*$/u.test(node.text))) ||
+    (ts.isCallExpression(node) && node.arguments.every(literalPath)));
 
 // Names the file binds to a constructed instance: `new X()`, `moduleRef.get(X)` and the like.
 function instanceNames(sf) {
@@ -162,12 +175,20 @@ export function analyzeTs(path, text) {
   const leadingOf = (stmt) =>
     (ts.getLeadingCommentRanges(text, stmt.pos) ?? []).map((r) => text.slice(r.pos, r.end)).join('\n');
 
-  // An `// observable: <why>` comment of five words or more above any enclosing statement.
+  const marked = (stmt) => {
+    const m = OBSERVABLE.exec(leadingOf(stmt));
+    return !!m && (m[1].match(/[A-Za-z]{2,}/g) ?? []).length >= 5;
+  };
+
+  // An `// observable: <why>` comment of five words or more above the site's own
+  // statement or above the test that holds it. A comment above a describe covers nothing.
   const observable = (node) => {
-    for (let n = node; n && !ts.isSourceFile(n); n = n.parent) {
-      if (!ts.isExpressionStatement(n) && !ts.isVariableStatement(n)) continue;
-      const m = OBSERVABLE.exec(leadingOf(n));
-      if (m && (m[1].match(/[A-Za-z]{2,}/g) ?? []).length >= 5) return true;
+    if (marked(enclosingStatement(node))) return true;
+    for (let n = node.parent; n && !ts.isSourceFile(n); n = n.parent) {
+      if (!ts.isExpressionStatement(n) || !ts.isCallExpression(n.expression)) continue;
+      const { root, props } = chain(n.expression.expression);
+      if (isTestCall(root, props)) return marked(n);
+      if (TEST_ROOTS.has(root)) return false;
     }
     return false;
   };
@@ -207,7 +228,13 @@ export function analyzeTs(path, text) {
       if (root === 'expect' && (matcher === 'toBe' || matcher === 'toBeFalsy')) {
         const target = chain(node.expression).root === 'expect' ? firstExpectArg(node) : null;
         const falsy = matcher === 'toBeFalsy' || node.arguments[0]?.kind === ts.SyntaxKind.FalseKeyword;
-        if (falsy && target && ts.isCallExpression(target) && /existsSync$/u.test(target.expression.getText(sf))) {
+        if (
+          falsy &&
+          target &&
+          ts.isCallExpression(target) &&
+          /existsSync$/u.test(target.expression.getText(sf)) &&
+          literalPath(target.arguments[0])
+        ) {
           site(node, 'smell:file-absence');
         }
       }

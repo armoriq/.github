@@ -53,7 +53,7 @@ const ALLOW = ' If this is the only signal the behaviour gives, put `// observab
 export const SMELLS = {
   'smell:no-assert': 'This new test asserts nothing, so no change to the code can fail it. Assert the result callers rely on.',
   'smell:smoke-only':
-    'This new test only checks that something exists, is truthy or does not throw. Assert the value or effect callers rely on.',
+    'This new test only checks that something it built exists or is truthy. Assert the value or effect callers rely on.',
   'smell:call-order': 'Asserting call order (invocationCallOrder) pins the implementation. Assert the observable result instead.',
   'smell:test-hook': 'A test-only hook (*ForTests) is production code that exists only for tests. Test through the public API.',
   'smell:file-absence': 'Asserting that a file is absent guards code that no longer exists. Delete the test.',

@@ -155,7 +155,7 @@ test('new implementation and past-code patterns fail', () => {
       "it('a', () => expect(1).toBe(1));",
       "it('b', () => { expect(a.mock.invocationCallOrder[0]).toBeLessThan(b.mock.invocationCallOrder[0]); });",
       "it('c', () => { svc.__resetCacheForTests(); expect(svc.size()).toBe(0); });",
-      "it('d', () => { expect(existsSync('src/old.ts')).toBe(false); });",
+      "it('d', () => { expect(fs.existsSync(path.join(SRC_DIR, 'old.ts'))).toBe(false); });",
       "it('e', () => { expect(screen.getByRole('button')).toHaveClass('btn-primary'); });",
       "it('f', () => { expect(container.querySelector('.card')).not.toBeNull(); });",
     ),
@@ -166,6 +166,24 @@ test('new implementation and past-code patterns fail', () => {
   assert.match(out, /a\.test\.tsx:4 Asserting that a file is absent/);
   assert.match(out, /a\.test\.tsx:5 Class names and CSS selectors/);
   assert.match(out, /a\.test\.tsx:6 Class names and CSS selectors/);
+});
+
+test('narrow cases stay allowed: runtime cleanup, value lookups, a marker above a describe covers nothing', () => {
+  const r = repo({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.spec.ts': spec(
+      "it('a', () => expect(1).toBe(1));",
+      "it('b', async () => { await lock.release(); expect(existsSync(lockPath)).toBe(false); });",
+      "it('c', () => { expect(url.searchParams.get('code')).not.toBeNull(); });",
+      '// observable: this whole block checks markup the user cannot see otherwise',
+      "describe('d', () => {",
+      "  it('e', () => { expect(el).toHaveClass('x'); });",
+      '});',
+    ),
+  });
+  const out = check(r).out;
+  assert.doesNotMatch(out, /a\.spec\.ts:[23] /);
+  assert.match(out, /a\.spec\.ts:6 Class names and CSS selectors/);
 });
 
 test('an observable marker with a reason allows a pattern', () => {
@@ -185,8 +203,9 @@ test('an observable marker with a reason allows a pattern', () => {
 });
 
 test('smells already on the base branch are not reported again', () => {
-  const r = repo({ 'a.spec.ts': spec("it('old', () => { expect(make()).toBeDefined(); });") });
-  r.commit({ 'a.spec.ts': spec("it('old', () => { expect(make()).toBeDefined(); });", "it('new', () => expect(1).toBe(1));") });
+  const old = "it('old', () => { expect(new Make()).toBeDefined(); });";
+  const r = repo({ 'a.spec.ts': spec(old) });
+  r.commit({ 'a.spec.ts': spec(old, "it('new', () => expect(1).toBe(1));") });
   assert.equal(check(r).code, 0);
 });
 
