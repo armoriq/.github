@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Renders a Stryker JSON report as the sticky PR comment: comment.mjs <report.json> [run-url]
-import { existsSync, readFileSync } from 'node:fs';
-import { relative } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const MARKER = '<!-- mutation-report -->';
@@ -13,9 +13,32 @@ const code = (s) => {
   return `<code>${short.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
 };
 
-export function render(report, { runUrl = '', cwd = process.cwd() } = {}) {
+export function merge(reports) {
+  const present = reports.filter(Boolean);
+  if (!present.length) return null;
+  const files = {};
+  for (const report of present) {
+    for (const [path, file] of Object.entries(report.files ?? {})) {
+      const into = (files[path] ??= { ...file, mutants: [] });
+      into.mutants.push(...(file.mutants ?? []));
+    }
+  }
+  return { ...present[0], files };
+}
+
+export function readReports(path) {
+  if (!path || !existsSync(path)) return [];
+  if (!statSync(path).isDirectory()) return [JSON.parse(readFileSync(path, 'utf8'))];
+  return readdirSync(path, { recursive: true })
+    .filter((name) => name.endsWith('.json'))
+    .sort()
+    .map((name) => JSON.parse(readFileSync(join(path, name), 'utf8')));
+}
+
+export function render(report, { runUrl = '', cwd = process.cwd(), missing = 0, expected = 0 } = {}) {
   const head = [MARKER, '### Mutation report', ''];
-  const footer = runUrl ? ['', `[Run log](${runUrl})`] : [];
+  const gap = missing ? ['', `${missing} of ${expected} shards produced no report, so their mutants are not counted above.`] : [];
+  const footer = [...gap, ...(runUrl ? ['', `[Run log](${runUrl})`] : [])];
   if (!report) {
     return [...head, 'Stryker did not produce a report for this run.', ...footer].join('\n');
   }
@@ -51,9 +74,11 @@ export function render(report, { runUrl = '', cwd = process.cwd() } = {}) {
 }
 
 function main(argv) {
-  const [reportPath, runUrl = ''] = argv;
-  const report = reportPath && existsSync(reportPath) ? JSON.parse(readFileSync(reportPath, 'utf8')) : null;
-  process.stdout.write(`${render(report, { runUrl })}\n`);
+  const [reportPath, runUrl = '', expectedArg = '1'] = argv;
+  const reports = readReports(reportPath);
+  const expected = Math.max(Number(expectedArg) || 1, reports.length);
+  const missing = expected - reports.length;
+  process.stdout.write(`${render(merge(reports), { runUrl, missing: reports.length ? missing : 0, expected })}\n`);
   return 0;
 }
 

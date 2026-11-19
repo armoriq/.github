@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { MARKER, render } from './comment.mjs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { MARKER, merge, readReports, render } from './comment.mjs';
 import { parseRanges } from './ranges.mjs';
+import { shard } from './shard.mjs';
 
 test('parseRanges keeps added hunks and drops deletion-only hunks', () => {
   const diff = [
@@ -59,4 +63,63 @@ test('the reusable workflow checks out PR code without persisting the write-scop
   const checkouts = wf.split(/\n\s*- /).filter((step) => /uses: actions\/checkout@/.test(step));
   assert.ok(checkouts.length > 0);
   for (const step of checkouts) assert.match(step, /persist-credentials: false/);
+});
+
+test('shard returns no shards when nothing is in scope', () => {
+  assert.deepEqual(shard('', 4), []);
+});
+
+test('shard keeps small diffs on one runner', () => {
+  const out = shard('src/a.ts:1-10,src/b.ts:5-20', 4);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].mutate, 'src/a.ts:1-10,src/b.ts:5-20');
+  assert.equal(out[0].lines, 26);
+});
+
+test('shard spreads large diffs across at most the requested runners without splitting or dropping ranges', () => {
+  const ranges = ['src/a.ts:1-200', 'src/b.ts:1-150', 'src/c.ts:1-120', 'src/a.ts:300-339', 'src/d.ts:7-7', 'src/e.ts:1-90'];
+  const out = shard(ranges.join(','), 3);
+  assert.equal(out.length, 3);
+  assert.deepEqual(out.map((s) => s.index), [0, 1, 2]);
+  const all = out.flatMap((s) => s.mutate.split(','));
+  assert.deepEqual([...all].sort(), [...ranges].sort());
+  const lines = out.map((s) => s.lines);
+  assert.equal(lines.reduce((a, b) => a + b), 601);
+  assert.ok(Math.max(...lines) - Math.min(...lines) <= 50);
+});
+
+test('shard never makes more shards than ranges', () => {
+  assert.equal(shard('src/a.ts:1-900', 4).length, 1);
+});
+
+test('merge unions shard reports and keeps every mutant', () => {
+  const a = { schemaVersion: '1', files: { 'src/a.ts': { language: 'typescript', mutants: [mutant('Killed', 1)] } } };
+  const b = {
+    schemaVersion: '1',
+    files: {
+      'src/a.ts': { language: 'typescript', mutants: [mutant('Survived', 9)] },
+      'src/b.ts': { language: 'typescript', mutants: [mutant('Timeout', 2)] },
+    },
+  };
+  const merged = merge([a, null, b]);
+  assert.equal(merged.files['src/a.ts'].mutants.length, 2);
+  assert.equal(merged.files['src/b.ts'].mutants.length, 1);
+  assert.equal(a.files['src/a.ts'].mutants.length, 1);
+  assert.equal(merge([]), null);
+});
+
+test('readReports reads every shard report under a directory', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mutation-'));
+  for (const i of [0, 1]) {
+    mkdirSync(join(dir, `mutation-report-${i}`));
+    writeFileSync(join(dir, `mutation-report-${i}`, 'mutation.json'), JSON.stringify({ files: { [`src/${i}.ts`]: { mutants: [] } } }));
+  }
+  assert.equal(readReports(dir).length, 2);
+  assert.deepEqual(readReports(join(dir, 'absent')), []);
+});
+
+test('render calls out shards that produced no report', () => {
+  const body = render({ files: { 'src/a.ts': { mutants: [mutant('Killed', 1)] } } }, { missing: 1, expected: 3 });
+  assert.match(body, /1 of 3 shards produced no report/);
+  assert.doesNotMatch(render({ files: {} }), /shards produced no report/);
 });

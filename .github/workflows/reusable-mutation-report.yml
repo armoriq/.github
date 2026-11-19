@@ -13,14 +13,21 @@ on:
       node-version:
         type: string
         default: '22'
+      shards:
+        description: Maximum number of runners to split the changed lines across. Small diffs use fewer.
+        type: number
+        default: 4
 permissions:
   contents: read
   pull-requests: write
 jobs:
-  run:
+  plan:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    continue-on-error: true
+    timeout-minutes: 5
+    outputs:
+      mutate: ${{ steps.ranges.outputs.mutate }}
+      matrix: ${{ steps.ranges.outputs.matrix }}
+      count: ${{ steps.ranges.outputs.count }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,23 +38,56 @@ jobs:
         with:
           base: HEAD^1
           scope: ${{ inputs.scope }}
-      - if: steps.ranges.outputs.mutate != ''
-        uses: actions/setup-node@v4
+          shards: ${{ inputs.shards }}
+  run:
+    needs: plan
+    if: needs.plan.outputs.mutate != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    name: run (${{ matrix.shard.index }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
-      - if: steps.ranges.outputs.mutate != ''
-        run: npm ci
-      - if: steps.ranges.outputs.mutate != '' && inputs.setup != ''
+      - run: npm ci
+      - if: inputs.setup != ''
         env:
           SETUP: ${{ inputs.setup }}
         run: bash -euo pipefail -c "$SETUP"
-      - id: stryker
-        if: steps.ranges.outputs.mutate != ''
-        continue-on-error: true
+      - continue-on-error: true
         env:
-          MUTATE: ${{ steps.ranges.outputs.mutate }}
+          MUTATE: ${{ matrix.shard.mutate }}
           DATABASE_URL: postgresql://none:none@127.0.0.1:1/none
         run: npx stryker run --mutate "$MUTATE"
-      - if: always() && steps.ranges.outputs.mutate != ''
-        uses: armoriq/.github/.github/actions/mutation-report/comment@main
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report-${{ matrix.shard.index }}
+          path: reports/mutation/mutation.json
+          if-no-files-found: ignore
+          retention-days: 7
+  report:
+    needs: [plan, run]
+    if: always() && needs.plan.outputs.mutate != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: mutation-report-*
+          path: mutation-reports
+      - uses: armoriq/.github/.github/actions/mutation-report/comment@main
+        with:
+          report: mutation-reports
+          shards: ${{ needs.plan.outputs.count }}
