@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - id: ranges
-        uses: armoriq/.github/.github/actions/mutation-report/ranges@main
+        uses: armoriq/.github/.github/actions/mutation-report/ranges@proof/mutation-shards
         with:
           base: HEAD^1
           scope: ${{ inputs.scope }}
@@ -87,7 +87,7 @@ jobs:
         with:
           pattern: mutation-report-*
           path: mutation-reports
-      - uses: armoriq/.github/.github/actions/mutation-report/comment@main
+      - uses: armoriq/.github/.github/actions/mutation-report/comment@proof/mutation-shards
         with:
           report: mutation-reports
           shards: ${{ needs.plan.outputs.count }}
