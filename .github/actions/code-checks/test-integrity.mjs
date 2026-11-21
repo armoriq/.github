@@ -49,6 +49,17 @@ export function explained(path, entries) {
   });
 }
 
+const ALLOW = ' If this is the only signal the behaviour gives, put `// observable: <why>` (five words or more) on the line above.';
+export const SMELLS = {
+  'smell:no-assert': 'This new test asserts nothing, so no change to the code can fail it. Assert the result callers rely on.',
+  'smell:smoke-only':
+    'This new test only checks that something it built exists or is truthy. Assert the value or effect callers rely on.',
+  'smell:call-order': 'Asserting call order (invocationCallOrder) pins the implementation. Assert the observable result instead.',
+  'smell:test-hook': 'A test-only hook (*ForTests) is production code that exists only for tests. Test through the public API.',
+  'smell:file-absence': 'Asserting that a file is absent guards code that no longer exists. Delete the test.',
+  'smell:markup': 'Class names and CSS selectors are static markup. Assert what the user sees: role, text or state.',
+};
+
 const multiset = (keys) => {
   const m = new Map();
   for (const k of keys) m.set(k, (m.get(k) ?? 0) + 1);
@@ -95,7 +106,9 @@ export function check({ base, body }) {
     const before = results.get(`base:${c.to}`);
     const after = results.get(`head:${c.to}`);
     for (const s of newSites(before.sites, after.sites)) {
-      if (s.kind === 'focus') {
+      if (s.kind in SMELLS) {
+        if (!s.observable) problems.push({ path: c.to, line: s.line, message: SMELLS[s.kind] + ALLOW });
+      } else if (s.kind === 'focus') {
         problems.push({ path: c.to, line: s.line, message: 'Remove the focus marker (.only, fit, fdescribe); it silently turns off every other test in the file.' });
       } else if (!s.quarantined) {
         problems.push({ path: c.to, line: s.line, message: 'A skipped test needs a tracking issue in the comment above it: `// quarantine: #1234 <why>`.' });
