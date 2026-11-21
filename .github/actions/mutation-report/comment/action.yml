@@ -2,8 +2,11 @@ name: Mutation comment
 description: Posts or updates one PR comment with the Stryker result.
 inputs:
   report:
-    description: Path to Stryker's JSON report.
+    description: Path to Stryker's JSON report, or a directory of shard reports to merge.
     default: reports/mutation/mutation.json
+  shards:
+    description: Number of shard reports expected, so missing shards are called out.
+    default: '1'
 runs:
   using: composite
   steps:
@@ -13,10 +16,11 @@ runs:
         REPO: ${{ github.repository }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         REPORT: ${{ inputs.report }}
+        SHARDS: ${{ inputs.shards }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
         set -euo pipefail
-        body="$(node "$GITHUB_ACTION_PATH/../comment.mjs" "$REPORT" "$RUN_URL")"
+        body="$(node "$GITHUB_ACTION_PATH/../comment.mjs" "$REPORT" "$RUN_URL" "$SHARDS")"
         printf '%s\n' "$body" >> "$GITHUB_STEP_SUMMARY"
         existing="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | startswith("<!-- mutation-report -->")) | .id' | head -n 1)"
         if [ -n "$existing" ]; then
