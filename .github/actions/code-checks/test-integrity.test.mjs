@@ -101,7 +101,111 @@ test('renaming a test file to a non-test name counts as deleting it', () => {
 
 test('a change to tests alone may delete tests without a reason', () => {
   const r = repo({ 'old.spec.ts': spec("it('old', () => expect(1).toBe(1));"), 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
-  r.commit({ 'old.spec.ts': null, 'a.spec.ts': spec("it('a', () => {});") });
+  r.commit({ 'old.spec.ts': null, 'a.spec.ts': spec("it('a', () => expect(2).toBe(2));") });
+  assert.equal(check(r).code, 0);
+});
+
+test('a new test that asserts nothing fails', () => {
+  const r = repo({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));", "it('b', () => { run(); });") });
+  const res = check(r);
+  assert.equal(res.code, 1);
+  assert.match(res.out, /a\.spec\.ts:2 This new test asserts nothing/);
+});
+
+test('a helper that asserts counts as an assertion', () => {
+  const r = repo({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.spec.ts': spec(
+      'const denial = async (p) => { expect(await p).toBe(403); };',
+      "it('a', () => expect(1).toBe(1));",
+      "it('b', async () => { await denial(call()); });",
+      "it('c', () => { expectOk(call()); });",
+      "it.each([1, 2])('d %p', (n) => { assert.equal(n, n); });",
+    ),
+  });
+  const res = check(r);
+  assert.equal(res.code, 0, res.out);
+});
+
+test('a new test that only checks existence or no-throw fails', () => {
+  const r = repo({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.spec.ts': spec(
+      "it('a', () => expect(1).toBe(1));",
+      "it('b', () => { const svc = new Service(); expect(svc).toBeDefined(); });",
+      "it('c', () => { expect(moduleRef.get(Controller)).toBeTruthy(); });",
+      "it('d', () => { expect(new Service()).toBeDefined(); expect(new Service().id).toBe(1); });",
+      "it('e', () => { expect(() => validate(input())).not.toThrow(); });",
+      "it('g', async () => { const err = (await validate(dto)).find((e) => e.property === 'slug'); expect(err).toBeDefined(); });",
+      "it('f', async () => { await request(app).post('/x').send(big).expect(413); });",
+      "test.beforeEach(async () => { await reset(); });",
+    ),
+  });
+  const res = check(r);
+  assert.match(res.out, /a\.spec\.ts:2 This new test only checks/);
+  assert.match(res.out, /a\.spec\.ts:3 This new test only checks/);
+  assert.doesNotMatch(res.out, /a\.spec\.ts:[4-8] /);
+});
+
+test('new implementation and past-code patterns fail', () => {
+  const r = repo({ 'a.test.tsx': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.test.tsx': spec(
+      "it('a', () => expect(1).toBe(1));",
+      "it('b', () => { expect(a.mock.invocationCallOrder[0]).toBeLessThan(b.mock.invocationCallOrder[0]); });",
+      "it('c', () => { svc.__resetCacheForTests(); expect(svc.size()).toBe(0); });",
+      "it('d', () => { expect(fs.existsSync(path.join(SRC_DIR, 'old.ts'))).toBe(false); });",
+      "it('e', () => { expect(screen.getByRole('button')).toHaveClass('btn-primary'); });",
+      "it('f', () => { expect(container.querySelector('.card')).not.toBeNull(); });",
+    ),
+  });
+  const out = check(r).out;
+  assert.match(out, /a\.test\.tsx:2 Asserting call order/);
+  assert.match(out, /a\.test\.tsx:3 A test-only hook/);
+  assert.match(out, /a\.test\.tsx:4 Asserting that a file is absent/);
+  assert.match(out, /a\.test\.tsx:5 Class names and CSS selectors/);
+  assert.match(out, /a\.test\.tsx:6 Class names and CSS selectors/);
+});
+
+test('narrow cases stay allowed: runtime cleanup, value lookups, a marker above a describe covers nothing', () => {
+  const r = repo({ 'a.spec.ts': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.spec.ts': spec(
+      "it('a', () => expect(1).toBe(1));",
+      "it('b', async () => { await lock.release(); expect(existsSync(lockPath)).toBe(false); });",
+      "it('c', () => { expect(url.searchParams.get('code')).not.toBeNull(); });",
+      '// observable: this whole block checks markup the user cannot see otherwise',
+      "describe('d', () => {",
+      "  it('e', () => { expect(el).toHaveClass('x'); });",
+      '});',
+    ),
+  });
+  const out = check(r).out;
+  assert.doesNotMatch(out, /a\.spec\.ts:[23] /);
+  assert.match(out, /a\.spec\.ts:6 Class names and CSS selectors/);
+});
+
+test('an observable marker with a reason allows a pattern', () => {
+  const r = repo({ 'a.test.tsx': spec("it('a', () => expect(1).toBe(1));") });
+  r.commit({
+    'a.test.tsx': spec(
+      "it('a', () => expect(1).toBe(1));",
+      '// observable: jsdom exposes the kerning only through this class',
+      "it('b', () => { expect(field()).toHaveClass('kerning-off'); });",
+      '// observable: too short',
+      "it('c', () => { expect(field()).toHaveClass('kerning-on'); });",
+    ),
+  });
+  const out = check(r).out;
+  assert.doesNotMatch(out, /a\.test\.tsx:3 /);
+  assert.match(out, /a\.test\.tsx:5 Class names and CSS selectors/);
+});
+
+test('smells already on the base branch are not reported again', () => {
+  const old = "it('old', () => { expect(new Make()).toBeDefined(); });";
+  const r = repo({ 'a.spec.ts': spec(old) });
+  r.commit({ 'a.spec.ts': spec(old, "it('new', () => expect(1).toBe(1));") });
   assert.equal(check(r).code, 0);
 });
 
