@@ -2,29 +2,29 @@
 
 Automated daily tracking of package and repository traction metrics from PyPI, npm, and GitHub.
 
-**Last updated:** 2026-11-25
+**Last updated:** 2026-11-26
 
 ## Tracked Items
 
-**Total downloads (PyPI + npm + GitHub clones):** 59,752
+**Total downloads (PyPI + npm + GitHub clones):** 60,892
 
 | Item | Source | Metric | Value |
 |------|--------|--------|-------|
-| @armoriq/armorclaw | npm | Total Downloads | 2,010 |
-| @armoriq/sdk | npm | Total Downloads | 10,036 |
-| ArmorIQ | Discord Members | Latest Value | 1,108 |
-| ArmorIQ | Discord Messages | Total Messages | 1,398 |
+| @armoriq/armorclaw | npm | Total Downloads | 2,011 |
+| @armoriq/sdk | npm | Total Downloads | 10,179 |
+| ArmorIQ | Discord Members | Latest Value | 1,152 |
+| ArmorIQ | Discord Messages | Total Messages | 1,456 |
 | armoriq-openclaw-plugin | npm | Total Downloads | 204 |
-| armoriq-sdk | PyPI | Total Downloads | 26,134 |
-| armoriq/armorClaude | GitHub Clones | Total Downloads | 10,863 |
+| armoriq-sdk | PyPI | Total Downloads | 26,189 |
+| armoriq/armorClaude | GitHub Clones | Total Downloads | 11,480 |
 | armoriq/armorClaude | GitHub Forks | Latest Value | 2 |
-| armoriq/armorClaude | GitHub Open Issues | Latest Value | 147 |
+| armoriq/armorClaude | GitHub Open Issues | Latest Value | 148 |
 | armoriq/armorClaude | GitHub Stars | Latest Value | 47 |
-| armoriq/armorCodex | GitHub Clones | Total Downloads | 5,110 |
+| armoriq/armorCodex | GitHub Clones | Total Downloads | 5,413 |
 | armoriq/armorCodex | GitHub Forks | Latest Value | 2 |
-| armoriq/armorCodex | GitHub Open Issues | Latest Value | 108 |
+| armoriq/armorCodex | GitHub Open Issues | Latest Value | 107 |
 | armoriq/armorCodex | GitHub Stars | Latest Value | 7 |
-| armoriq/armorclaw | GitHub Clones | Total Downloads | 611 |
+| armoriq/armorclaw | GitHub Clones | Total Downloads | 632 |
 | armoriq/armorclaw | GitHub Forks | Latest Value | 3 |
 | armoriq/armorclaw | GitHub Open Issues | Latest Value | 8 |
 | armoriq/armorclaw | GitHub Stars | Latest Value | 268 |
